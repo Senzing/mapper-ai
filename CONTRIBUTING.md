@@ -14,7 +14,7 @@ There are a number of ways you can contribute:
 
 ## License Agreements
 
-If your contribution modifies the git repository, the following agreements must be established.
+If your contribution modifies the Git repository, the following agreements must be established.
 
 _Note:_ License agreements are only needed for adding, modifying, and deleting artifacts kept within the repository.
 In simple terms, license agreements are needed before pull requests can be accepted.
@@ -118,17 +118,17 @@ or [Creating a pull request from a fork] instructions.
 
 Accepting pull requests will be at the discretion of Senzing, Inc. and the repository owner(s).
 
-[Code of Conduct]: CODE_OF_CONDUCT.md
-[Asking questions]: #questions
-[Requesting features]: #feature-requests
-[Reporting bugs]: #bug-reporting
-[Contributing code or documentation]: #contributing-code-or-documentation
-[Individual Contributor License Agreement (ICLA)]: .github/senzing-individual-contributor-license-agreement.pdf
-[Corporate Contributor License Agreement (CCLA)]: .github/senzing-corporate-contributor-license-agreement.pdf
-[LICENSE]: LICENSE
-[GitHub issue]: https://help.github.com/articles/creating-an-issue/
 [already been reported]: https://github.com/search?q=+is%3Aissue+user%3Asenzing
-[License Agreements]: #license-agreements
-[Pull Request]: #pull-requests
+[Asking questions]: #questions
+[Code of Conduct]: CODE_OF_CONDUCT.md
+[Contributing code or documentation]: #contributing-code-or-documentation
+[Corporate Contributor License Agreement (CCLA)]: .github/senzing-corporate-contributor-license-agreement.pdf
 [Creating a pull request from a branch]: https://help.github.com/articles/creating-a-pull-request/
 [Creating a pull request from a fork]: https://help.github.com/articles/creating-a-pull-request-from-a-fork/
+[GitHub issue]: https://help.github.com/articles/creating-an-issue/
+[Individual Contributor License Agreement (ICLA)]: .github/senzing-individual-contributor-license-agreement.pdf
+[License Agreements]: #license-agreements
+[LICENSE]: LICENSE
+[Pull Request]: #pull-requests
+[Reporting bugs]: #bug-reporting
+[Requesting features]: #feature-requests
