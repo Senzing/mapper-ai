@@ -117,14 +117,17 @@ ALLOWED_RECORD_TYPES = {"PERSON", "ORGANIZATION", "VESSEL", "AIRCRAFT"}
 
 
 def is_scalar(value: Any) -> bool:
+    """Check if a value is a scalar type (string, int, float, bool, or None)."""
     return isinstance(value, SCALAR_TYPES)
 
 
 def detect_family(key: str) -> str | None:
+    """Return the feature family name for a given attribute key, or None if unknown."""
     return KEY_TO_FAMILY.get(key)
 
 
 def feature_families(obj: Dict[str, Any]) -> Tuple[List[str], List[str]]:
+    """Extract feature families from a feature object, returning (families, unknown_keys)."""
     families: List[str] = []
     unknown: List[str] = []
     for k in obj.keys():
@@ -138,6 +141,7 @@ def feature_families(obj: Dict[str, Any]) -> Tuple[List[str], List[str]]:
 
 
 def lint_record(doc: Any, where: str, *, strict: bool = True) -> List[str]:
+    """Validate a Senzing JSON record against the spec, returning list of error messages."""
     errors: List[str] = []
     warnings: List[str] = []
 
@@ -267,7 +271,7 @@ def lint_record(doc: Any, where: str, *, strict: bool = True) -> List[str]:
                 has_name_org = True
             if "NAME_LAST" in item:
                 has_name_last = True
-    
+
     if has_name_org and has_name_last:
         errors.append(f"{where}: Cannot have both NAME_ORG and NAME_LAST in FEATURES array; indicates confusion between person and organization")
 
@@ -282,6 +286,7 @@ def lint_record(doc: Any, where: str, *, strict: bool = True) -> List[str]:
 
 
 def iter_paths(root: str) -> List[str]:
+    """Return list of JSON/JSONL file paths from root (file or directory)."""
     if os.path.isdir(root):
         out: List[str] = []
         for d, _, files in os.walk(root):
@@ -293,6 +298,7 @@ def iter_paths(root: str) -> List[str]:
 
 
 def load_file(path: str) -> List[Tuple[Any, str]]:
+    """Load JSON/JSONL file and return list of (object, location) tuples."""
     items: List[Tuple[Any, str]] = []
     with open(path, "r", encoding="utf-8") as f:
         if path.lower().endswith(".jsonl"):
@@ -313,6 +319,7 @@ def load_file(path: str) -> List[Tuple[Any, str]]:
 
 
 def main(argv: List[str]) -> int:
+    """Main entry point for the linter CLI."""
     if len(argv) < 2:
         print(__doc__.strip())
         return 2
