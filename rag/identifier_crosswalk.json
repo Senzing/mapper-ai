@@ -1,0 +1,180 @@
+{
+  "$schema": "senzing-identifier-crosswalk/v1",
+  "version": "0.1.0",
+  "updated": "2025-09-10",
+  "canonical": {
+    "SSN": {
+      "feature": "SSN",
+      "attributes": {
+        "SSN_NUMBER": "<VALUE>"
+      },
+      "issuer": {"country": "US"},
+      "synonyms": ["SOCIAL_SECURITY_NUMBER", "SSN_NUMBER", "SSN_NO"],
+      "notes": "US Social Security Number. Partial allowed per spec.",
+      "sources": []
+    },
+    "PASSPORT": {
+      "feature": "PASSPORT",
+      "attributes": {
+        "PASSPORT_NUMBER": "<VALUE>",
+        "PASSPORT_COUNTRY": "<CC>"
+      },
+      "issuer": {"country": "<CC>"},
+      "synonyms": ["PASSPORT_NO", "PPT", "PPN"],
+      "notes": "Include issuing country code.",
+      "sources": []
+    },
+    "DRLIC": {
+      "feature": "DRLIC",
+      "attributes": {
+        "DRIVERS_LICENSE_NUMBER": "<VALUE>",
+        "DRIVERS_LICENSE_STATE": "<STATE_OR_CC>"
+      },
+      "issuer": {"state_or_country": "<STATE_OR_CC>"},
+      "synonyms": ["DRIVERS_LICENSE", "DRIVER_LICENSE", "DL_NUM", "DL_NUMBER"],
+      "notes": "Provide state/province or country issuer.",
+      "sources": []
+    },
+    "EIN": {
+      "feature": "TAX_ID",
+      "attributes": {
+        "TAX_ID_TYPE": "EIN",
+        "TAX_ID_NUMBER": "<VALUE>",
+        "TAX_ID_COUNTRY": "US"
+      },
+      "issuer": {"country": "US"},
+      "synonyms": ["FEIN"],
+      "notes": "US Employer Identification Number (organizations).",
+      "sources": []
+    },
+    "TIN": {
+      "feature": "TAX_ID",
+      "attributes": {
+        "TAX_ID_TYPE": "TIN",
+        "TAX_ID_NUMBER": "<VALUE>",
+        "TAX_ID_COUNTRY": "<CC>"
+      },
+      "issuer": {"country": "<CC>"},
+      "synonyms": ["TAX_ID"],
+      "notes": "Generic tax identifier; prefer specific types when known (e.g., EIN, INN, VAT).",
+      "sources": []
+    },
+    "VAT": {
+      "feature": "TAX_ID",
+      "attributes": {
+        "TAX_ID_TYPE": "VAT",
+        "TAX_ID_NUMBER": "<VALUE>",
+        "TAX_ID_COUNTRY": "<CC>"
+      },
+      "issuer": {"country": "<CC>"},
+      "synonyms": ["VAT_NO", "VAT_NUMBER"],
+      "notes": "Value Added Tax identifier; country-specific.",
+      "sources": []
+    },
+    "LEI": {
+      "feature": "LEI_NUMBER",
+      "attributes": {
+        "LEI_NUMBER": "<VALUE>"
+      },
+      "issuer": {"organization": "GLEIF"},
+      "synonyms": ["LEI_NUMBER"],
+      "notes": "Global Legal Entity Identifier.",
+      "sources": []
+    },
+    "DUNS": {
+      "feature": "DUNS_NUMBER",
+      "attributes": {
+        "DUNS_NUMBER": "<VALUE>"
+      },
+      "issuer": {"organization": "Dun & Bradstreet"},
+      "synonyms": ["DUNS_NUMBER"],
+      "notes": "D-U-N-S number for organizations.",
+      "sources": []
+    },
+    "NPI": {
+      "feature": "NPI_NUMBER",
+      "attributes": {
+        "NPI_NUMBER": "<VALUE>"
+      },
+      "issuer": {"organization": "CMS"},
+      "synonyms": ["NPI_NUMBER"],
+      "notes": "US National Provider Identifier (healthcare).",
+      "sources": []
+    },
+    "INN": {
+      "feature": "TAX_ID",
+      "attributes": {
+        "TAX_ID_TYPE": "INN",
+        "TAX_ID_NUMBER": "<VALUE>",
+        "TAX_ID_COUNTRY": "RU"
+      },
+      "issuer": {"country": "RU"},
+      "synonyms": ["ИНН"],
+      "notes": "Russia taxpayer identification number.",
+      "sources": []
+    },
+    "NIT": {
+      "feature": "TAX_ID",
+      "attributes": {
+        "TAX_ID_TYPE": "NIT",
+        "TAX_ID_NUMBER": "<VALUE>",
+        "TAX_ID_COUNTRY": "<CC>"
+      },
+      "issuer": {"country": "<CC>"},
+      "synonyms": ["NIT_NUMBER"],
+      "notes": "Latin American tax identifier name used in multiple countries; confirm country.",
+      "sources": []
+    },
+    "CEDULA": {
+      "feature": "NATIONAL_ID",
+      "attributes": {
+        "NATIONAL_ID_TYPE": "CEDULA",
+        "NATIONAL_ID_NUMBER": "<VALUE>",
+        "NATIONAL_ID_COUNTRY": "<CC>"
+      },
+      "issuer": {"country": "<CC>"},
+      "synonyms": ["CEDULA_NO", "CEDULA_NUMBER"],
+      "notes": "National ID term in several countries; confirm country.",
+      "sources": []
+    },
+    "OTHER_ID": {
+      "feature": "OTHER_ID",
+      "attributes": {
+        "OTHER_ID_TYPE": "<TYPE>",
+        "OTHER_ID_NUMBER": "<VALUE>",
+        "OTHER_ID_COUNTRY": "<CC>"
+      },
+      "issuer": {},
+      "synonyms": [],
+      "notes": "Use sparingly; prefer adding specific features where possible.",
+      "sources": []
+    }
+  },
+  "aliases": {
+    "FEIN": "EIN",
+    "SSN_NUM": "SSN",
+    "SOC_SEC_NO": "SSN",
+    "SOCIAL_SECURITY_NO": "SSN",
+    "DRIVERS_LICENSE_NUMBER": "DRLIC",
+    "DL_NUM": "DRLIC",
+    "DLN": "DRLIC",
+    "PASSPORT_NO": "PASSPORT",
+    "NATIONAL_INSURANCE": "NATIONAL_ID",
+    "PAN_IN": "TAX_ID",
+    "PAN": "TAX_ID"
+  },
+  "usage": {
+    "how_to_apply": [
+      "Normalize incoming type token (upper-case, trim punctuation)",
+      "If token in aliases -> replace with canonical key",
+      "Lookup canonical entry and map to Senzing feature + attributes",
+      "Always include issuer country/state when applicable per spec",
+      "Prefer specific features before generic NATIONAL_ID/TAX_ID/OTHER_ID"
+    ],
+    "uncertainty_protocol": [
+      "If token is unknown or ambiguous, ask the user OR perform a curated lookup (no PII, authoritative sources)",
+      "Log conclusion and, if approved, add alias/canonical entry here for reuse"
+    ]
+  }
+}
+
