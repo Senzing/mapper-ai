@@ -118,7 +118,7 @@ All fields from Stage 2:
 Disposition: Feature/Payload/Ignore
 Confidence: 1.0=certain, 0.9-0.99=high, 0.7-0.89=medium, <0.7=low
 
-**RECORD_ID requirement:** Every entity MUST have RECORD_ID. If source has unique key → map it. If NO unique key in source → derive deterministic RECORD_ID as hash of normalized identifying features (per spec: fixed field order, trim/collapse whitespace, case-fold, normalize punctuation). Document derivation logic.
+**RECORD_ID requirement:** Every entity MUST have RECORD_ID. If source has unique key → map it. If NO unique key → derive as SHA1 hex hash of normalized identifying features (fixed order, trimmed, case-folded). Example: `hashlib.sha1(f"{name}|{addr}".encode()).hexdigest()`. Document logic.
 
 **4.2 High-Confidence**
 Show ≥0.80, ask approval.
