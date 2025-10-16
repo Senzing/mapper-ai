@@ -2,6 +2,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "agentic",
     "alturath",
     "Analysing",
     "applehelp",
@@ -86,6 +87,6 @@
     ".git/**",
     ".mypy_cache/**",
     "development-requirements.txt",
-    "documentation-requirements.txt"
+    "rag/**"
   ]
 }

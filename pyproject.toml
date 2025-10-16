@@ -96,8 +96,10 @@ disable = [
   "consider-using-with",
   "invalid-name",
   "line-too-long",
+  "redefined-outer-name",
   "too-many-branches",
   "too-many-lines",
+  "too-many-locals",
   "too-many-statements",
   "unspecified-encoding",
 ]

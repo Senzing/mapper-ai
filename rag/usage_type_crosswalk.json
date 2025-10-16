@@ -1,0 +1,252 @@
+{
+  "$schema": "senzing-usage-type-crosswalk/v1",
+  "version": "0.1.0",
+  "updated": "2025-10-11",
+  "usage": {
+    "notes": [
+      "Only a few usage types have special meaning in matching/display: NAME_TYPE=PRIMARY; ADDR_TYPE=BUSINESS (for organizations); PHONE_TYPE=MOBILE.",
+      "Normalization steps: trim whitespace, collapse internal spaces, strip punctuation, uppercase tokens before lookup.",
+      "Apply alias → canonical mapping per feature; if unknown, keep original token (uppercased) for reference only."
+    ]
+  },
+  "features": {
+    "NAME": {
+      "canonical": {
+        "PRIMARY": {
+          "synonyms": [
+            "LEGAL",
+            "LEGAL_NAME",
+            "PRIMARY_NAME",
+            "OFFICIAL"
+          ],
+          "special_meaning": true,
+          "notes": "Preferred display name when multiple names exist."
+        },
+        "AKA": {
+          "synonyms": [
+            "ALIAS",
+            "A.K.A.",
+            "AKA_NAME",
+            "ALSO_KNOWN_AS",
+            "AKA(S)"
+          ],
+          "special_meaning": false,
+          "notes": "Alternate/alias names for a person."
+        },
+        "DBA": {
+          "synonyms": [
+            "D.B.A.",
+            "TRADING_AS",
+            "T/A",
+            "DOING_BUSINESS_AS"
+          ],
+          "special_meaning": false,
+          "notes": "Trade/DBA names for organizations."
+        },
+        "NICKNAME": {
+          "synonyms": [
+            "PREFERRED",
+            "PREFERRED_NAME",
+            "SHORT_NAME",
+            "CALL_ME"
+          ],
+          "special_meaning": false,
+          "notes": "Nickname/preferred name."
+        },
+        "FORMER": {
+          "synonyms": [
+            "PREVIOUS_NAME",
+            "OLD_NAME"
+          ],
+          "special_meaning": false,
+          "notes": "Former/previous name label."
+        },
+        "MAIDEN": {
+          "synonyms": [
+            "BIRTH_NAME"
+          ],
+          "special_meaning": false,
+          "notes": "Maiden/birth surname."
+        }
+      },
+      "aliases": {
+        "ALIAS": "AKA",
+        "A.K.A.": "AKA",
+        "AKA_NAME": "AKA",
+        "ALSO_KNOWN_AS": "AKA",
+        "AKA(S)": "AKA",
+        "LEGAL": "PRIMARY",
+        "LEGAL_NAME": "PRIMARY",
+        "PRIMARY_NAME": "PRIMARY",
+        "OFFICIAL": "PRIMARY",
+        "PREFERRED": "NICKNAME",
+        "PREFERRED_NAME": "NICKNAME",
+        "SHORT_NAME": "NICKNAME",
+        "CALL_ME": "NICKNAME",
+        "PREVIOUS_NAME": "FORMER",
+        "OLD_NAME": "FORMER",
+        "BIRTH_NAME": "MAIDEN"
+      }
+    },
+    "ADDRESS": {
+      "canonical": {
+        "HOME": {
+          "synonyms": [
+            "RESIDENCE",
+            "RESIDENTIAL",
+            "HOME_ADDRESS",
+            "PRIMARY_RESIDENCE"
+          ],
+          "special_meaning": false,
+          "notes": "Home/residential address (persons)."
+        },
+        "MAILING": {
+          "synonyms": [
+            "MAIL",
+            "POSTAL",
+            "REMlTTANCE",
+            "PO_BOX",
+            "CORRESPONDENCE"
+          ],
+          "special_meaning": false,
+          "notes": "Mailing/remittance address."
+        },
+        "BUSINESS": {
+          "synonyms": [
+            "WORK_ADDRESS",
+            "OFFICE",
+            "HQ",
+            "HEADQUARTERS",
+            "BUSINESS_ADDRESS"
+          ],
+          "special_meaning": true,
+          "notes": "Business/physical location (organizations); adds weight."
+        },
+        "REGISTERED_OFFICE": {
+          "synonyms": [
+            "REGISTERED",
+            "REGISTERED_ADDR",
+            "COMPANY_REGISTERED_OFFICE"
+          ],
+          "special_meaning": false,
+          "notes": "Registered office for organizations."
+        },
+        "PREVIOUS": {
+          "synonyms": [
+            "FORMER",
+            "OLD_ADDRESS",
+            "PRIOR"
+          ],
+          "special_meaning": false,
+          "notes": "Historical/previous address."
+        },
+        "BILLING": {
+          "synonyms": [
+            "INVOICE",
+            "AR"
+          ],
+          "special_meaning": false,
+          "notes": "Billing/invoice address."
+        },
+        "SHIPPING": {
+          "synonyms": [
+            "DELIVERY",
+            "FULFILLMENT"
+          ],
+          "special_meaning": false,
+          "notes": "Shipping/delivery address."
+        }
+      },
+      "aliases": {
+        "RESIDENCE": "HOME",
+        "RESIDENTIAL": "HOME",
+        "HOME_ADDRESS": "HOME",
+        "PRIMARY_RESIDENCE": "HOME",
+        "MAIL": "MAILING",
+        "POSTAL": "MAILING",
+        "REMITTANCE": "MAILING",
+        "PO_BOX": "MAILING",
+        "CORRESPONDENCE": "MAILING",
+        "WORK_ADDRESS": "BUSINESS",
+        "OFFICE": "BUSINESS",
+        "HQ": "BUSINESS",
+        "HEADQUARTERS": "BUSINESS",
+        "BUSINESS_ADDRESS": "BUSINESS",
+        "REGISTERED": "REGISTERED_OFFICE",
+        "REGISTERED_ADDR": "REGISTERED_OFFICE",
+        "COMPANY_REGISTERED_OFFICE": "REGISTERED_OFFICE",
+        "FORMER": "PREVIOUS",
+        "OLD_ADDRESS": "PREVIOUS",
+        "PRIOR": "PREVIOUS",
+        "INVOICE": "BILLING",
+        "AR": "BILLING",
+        "DELIVERY": "SHIPPING",
+        "FULFILLMENT": "SHIPPING"
+      }
+    },
+    "PHONE": {
+      "canonical": {
+        "MOBILE": {
+          "synonyms": [
+            "CELL",
+            "CELL_PHONE",
+            "CELLPHONE",
+            "SMARTPHONE",
+            "HANDSET",
+            "GSM",
+            "MSISDN",
+            "MOB"
+          ],
+          "special_meaning": true,
+          "notes": "Personal mobile number; carries additional weight."
+        },
+        "HOME": {
+          "synonyms": [
+            "RESIDENCE",
+            "LANDLINE_HOME",
+            "HOME_PHONE"
+          ],
+          "special_meaning": false,
+          "notes": "Home phone."
+        },
+        "WORK": {
+          "synonyms": [
+            "BUSINESS",
+            "OFFICE",
+            "LANDLINE_WORK",
+            "DESK_PHONE",
+            "SWITCHBOARD"
+          ],
+          "special_meaning": false,
+          "notes": "Work/office phone."
+        },
+        "FAX": {
+          "synonyms": [
+            "FACSIMILE"
+          ],
+          "special_meaning": false,
+          "notes": "Fax number."
+        }
+      },
+      "aliases": {
+        "CELL": "MOBILE",
+        "CELL_PHONE": "MOBILE",
+        "CELLPHONE": "MOBILE",
+        "SMARTPHONE": "MOBILE",
+        "HANDSET": "MOBILE",
+        "GSM": "MOBILE",
+        "MSISDN": "MOBILE",
+        "MOB": "MOBILE",
+        "RESIDENCE": "HOME",
+        "LANDLINE_HOME": "HOME",
+        "HOME_PHONE": "HOME",
+        "BUSINESS": "WORK",
+        "OFFICE": "WORK",
+        "LANDLINE_WORK": "WORK",
+        "DESK_PHONE": "WORK",
+        "SWITCHBOARD": "WORK",
+        "FACSIMILE": "FAX"
+      }
+    }
+  }
+}
