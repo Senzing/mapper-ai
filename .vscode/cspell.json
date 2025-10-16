@@ -86,6 +86,6 @@
     ".git/**",
     ".mypy_cache/**",
     "development-requirements.txt",
-    "documentation-requirements.txt"
+    "rag/**"
   ]
 }
