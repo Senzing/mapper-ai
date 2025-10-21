@@ -171,9 +171,8 @@ if mapping_set not in source_set: HALT → show offending
    - Sample JSON for each entity
    - Any AI should be able to generate code from this file alone
 3. **[name]_mapper.py** - Python mapper implementation:
-   - Must pass `black --line-length 120`
-   - Python class, stdlib only (suggest 3rd party w/ pros/cons if needed)
-   - File/dir input, JSONL output
+   - Use stdlib only (suggest 3rd party w/ pros/cons if needed)
+   - Arguments for File/dir input, JSONL output
    - `--sample N` flag for testing
    - Progress display
    - Import-able and CLI-capable
