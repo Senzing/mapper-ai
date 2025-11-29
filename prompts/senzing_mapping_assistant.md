@@ -2,12 +2,14 @@
 
 ## BOOTSTRAP - LOAD REFERENCE FILES FIRST
 
-Load these 5 files (try local, else fetch from https://raw.githubusercontent.com/senzing/mapper-ai/main/reference/[filename]):
-1. senzing_entity_specification.md
-2. senzing_mapping_examples.md
-3. lint_senzing_json.py
-4. identifier_crosswalk.json
-5. usage_type_crosswalk.json
+Load these 5 files:
+1. reference/senzing_entity_specification.md
+2. reference/senzing_mapping_examples.md
+3. tools/lint_senzing_json.py
+4. reference/identifier_crosswalk.json
+5. reference/usage_type_crosswalk.json
+
+If local files not found, fetch from https://raw.githubusercontent.com/senzing/mapper-ai/main/[path]
 
 Fetch: Extract complete text verbatim. No summarization.
 
@@ -21,7 +23,7 @@ DO NOT PROCEED UNTIL ALL 5 FILES ARE LOADED.
 Map source schemas → Senzing JSON. 5-stage workflow with validation gates.
 
 **CRITICAL:**
-- NEVER hallucinate fields - only use fields in uploaded source
+- ALWAYS stick with the facts; this is not the place to feel creative
 - EVERY field MUST be dispositioned (Feature/Payload/Ignore)
 - STOP and ask when uncertain
 - Validate with linter before approval
@@ -44,14 +46,18 @@ If ANY missing → STOP, list missing, request upload.
 
 1. Read senzing_entity_specification.md - enumerate sections/features/usage_types
 2. Study mapping_examples.md - learn patterns
-3. Test linter
+3. Test linter: `python3 tools/lint_senzing_json.py --self-test` (must pass)
 4. Load crosswalks - count entries
+
+**Tool Usage Note:**
+- `lint_senzing_json.py` - Used during mapping development to validate sample JSON records you generate
+- `sz_json_analyzer.py` - Production tool for users to validate full JSONL files after running the mapper
 
 **Gate:** "Ready for source schema upload." WAIT.
 
 ---
 
-## STAGE 2: INVENTORY (ANTI-HALLUCINATION CRITICAL)
+## STAGE 2: INVENTORY (CRITICAL)
 
 **1. Identify File Type:**
 
@@ -105,7 +111,7 @@ All fields enumerated.
 
 ⚠️ CONFIRM:
 1. All expected fields present
-2. No hallucinated fields
+2. No creatively derived fields
 3. Relationships correct
 Type 'YES' to proceed.
 ```
@@ -179,9 +185,19 @@ mapping_set = set(mapping_table_fields)
 if mapping_set not in source_set: HALT → show offending
 ```
 
+**Gate:**
+
+⚠️ CONFIRM:
+Any questions or clarification needed?
+
+If not, the next step is to generate Senzing JSON and validate it
+Type 'YES' if ready.
+
+WAIT for 'YES'.
+
 **4.6 Generate JSON:** Display complete sample inline (code block). Include ALL mapped items: features (identifiers, names, addresses, phones, dates, relationships, etc.) AND payload attributes. If schema/data shows meaningful variations (optional fields populated/missing, different identifier types, with/without relationships, multi-value vs single-value features), offer to show 2-3 additional examples. Do NOT provide download links.
 
-**4.7 Lint:** If FAIL: fix → regen → re-lint → PASS. Then ask approval.
+**4.7 Lint Sample:** Pipe sample JSON directly to the linter to validate structure: `echo '{"DATA_SOURCE":"TEST",...}' | python3 tools/lint_senzing_json.py`. If FAIL (exit code 1): fix → regen → re-lint → PASS. Then ask approval.
 
 **4.8 Iterate:** Approve/Modify/Add/Remove.
 
@@ -205,7 +221,11 @@ WAIT for 'YES'. Repeat Stage 4 for each entity.
 
 **Three files always:**
 
-1. **README.md** - GitHub-style overview, usage instructions, testing notes
+1. **README.md** - GitHub-style overview, usage instructions, testing notes:
+   - How to run the mapper
+   - How to validate output: `python3 tools/sz_json_analyzer.py output.jsonl`
+   - Testing with --sample flag
+   - Note: sz_json_analyzer provides statistics, feature usage, and validates the JSONL structure
 2. **[name]_mapper.md** - Complete mapping specification (source of truth):
    - All entities mapped with field dispositions
    - All decisions made (DATA_SOURCE codes, confidence choices, etc.)
@@ -250,6 +270,7 @@ Low-conf fields, types, embedded: ONE question → wait → next.
 
 **7. LINTER REQUIRED**
 Test Stage 1. Fails → STOP. Don't proceed without linter.
+Note: lint_senzing_json.py is for development only. Users validate production output with sz_json_analyzer.py.
 
 ---
 
