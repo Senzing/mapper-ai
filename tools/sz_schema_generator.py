@@ -1,4 +1,9 @@
 #! /usr/bin/env python3
+"""Analyze source data files and generate schema documentation.
+
+Supports CSV, JSON, JSONL, Parquet, and XML formats. Generates markdown
+reports with field statistics, data types, and sample values.
+"""
 import argparse
 import csv
 import glob
@@ -9,22 +14,20 @@ import subprocess
 import sys
 import time
 import xml.etree.ElementTree as ET  # Add import for XML parsing
-from datetime import date, datetime, timedelta
-from typing import Iterable, Iterator
 
 try:
     import numpy as np
-except:
+except ImportError:
     np = False
 
 try:
     import pandas as pd
-except:
+except ImportError:
     pd = False
 
 try:
     import prettytable
-except:
+except ImportError:
     prettytable = False
 
 
@@ -43,6 +46,10 @@ class FileReader:
     def __iter__(self):
         return self
 
+    def __next__(self):
+        """Return next record. Override in subclasses."""
+        raise StopIteration
+
     def __enter__(self):
         self.open()
         return self
@@ -52,8 +59,7 @@ class FileReader:
         return False
 
     def open(self):
-        """Open the file for reading."""
-        pass
+        """Open the file for reading. Override in subclasses."""
 
     def close(self):
         """Close the file."""
@@ -296,7 +302,7 @@ def get_reader(file_type, file_path, encoding="utf-8"):
 # NODE CLASS
 # ============================================================================
 
-class Node(object):
+class Node:
     """Represents a node in the data schema tree."""
 
     def __init__(self, node_id):
@@ -307,9 +313,11 @@ class Node(object):
         self.description = None  # For field descriptions (e.g., from Socrata meta)
 
     def add_child(self, obj):
+        """Add a child node to this node."""
         self.children.append(obj)
 
     def render_tree(self):
+        """Render the tree structure as a string."""
         tree = f"{self.node_desc} ({self.node_type})\n"
         parents = [{"node": self, "display_children": self.children}]
         while parents:
@@ -341,6 +349,7 @@ class Node(object):
 # ============================================================================
 
 class FileAnalyzer:
+    """Analyzes file structure and collects field statistics."""
 
     def __init__(self, file_name, file_type, group_by_attr=None, enumerate_config=None):
         self.record_count = 0
@@ -356,7 +365,7 @@ class FileAnalyzer:
         self.group_by_filter = None  # Can be set after initialization
         self.field_metadata = {}  # For storing field descriptions and other metadata
         self.xml_namespaces = {}  # For storing XML namespace information
-        
+
         # Handle both old and new enumeration formats
         if enumerate_config:
             if isinstance(enumerate_config, dict):
@@ -373,7 +382,7 @@ class FileAnalyzer:
             self.enumerate_attrs = []
             self.enumerate_config = None
             self.is_pivot_enumeration = False
-        
+
         # For grouped analysis: track nodes and record counts per group
         if group_by_attr:
             self.groups = {}  # group_value -> {nodes: {}, record_count: 0}
@@ -381,7 +390,7 @@ class FileAnalyzer:
         else:
             self.groups = None
             self.group_record_counts = None
-            
+
         # For code enumeration: track code statistics
         if self.enumerate_attrs or self.is_pivot_enumeration:
             if self.is_pivot_enumeration:
@@ -395,10 +404,10 @@ class FileAnalyzer:
                 # Legacy enumeration
                 if group_by_attr:
                     # Group-aware enumeration: group_value -> attr_path -> {code_value -> {count, records}}
-                    self.enumeration_stats = {}  
+                    self.enumeration_stats = {}
                 else:
                     # Standard enumeration: attr_path -> {code_value -> {count, records}}
-                    self.enumeration_stats = {}  
+                    self.enumeration_stats = {}
                     for attr in self.enumerate_attrs:
                         self.enumeration_stats[attr] = {}
                 self.pivot_stats = None  # Not used for legacy enumeration
@@ -413,7 +422,7 @@ class FileAnalyzer:
             group_value = obj.get(self.group_by_attr, "unknown")
             if str(group_value) != str(self.group_by_filter):
                 return  # Skip this record
-        
+
         # Handle enumeration if enabled
         if (self.enumerate_attrs or self.is_pivot_enumeration) and isinstance(obj, dict):
             try:
@@ -425,14 +434,12 @@ class FileAnalyzer:
                         self.process_enumeration_for_group(obj, group_value)
                     else:
                         self.process_enumeration(obj)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 print(f"Error processing record {obj.get('id', 'unknown')}: {e}")
-                # Continue processing other records
-                pass
-            
+
         if self.group_by_attr and isinstance(obj, dict):
             group_value = obj.get(self.group_by_attr, "unknown")
-            
+
             # Initialize group if not exists
             if group_value not in self.groups:
                 self.groups[group_value] = {
@@ -443,7 +450,7 @@ class FileAnalyzer:
                 root_node = self.groups[group_value]["nodes"]["root"]
                 root_node.node_desc = f"root ({group_value})"
                 root_node.node_type = self.root_node.node_type
-            
+
             # Process this record for the group
             self.groups[group_value]["record_count"] += 1
             self.iterate_obj_for_group(group_value, "root", obj)
@@ -458,7 +465,7 @@ class FileAnalyzer:
             self.enumeration_stats[group_value] = {}
             for attr in self.enumerate_attrs:
                 self.enumeration_stats[group_value][attr] = {}
-        
+
         for attr_path in self.enumerate_attrs:
             values = self.extract_nested_values(obj, attr_path)
             if values:
@@ -499,7 +506,7 @@ class FileAnalyzer:
         level = config['level']
         grouping_attrs = config['grouping_attrs']
         value_attr = config['value_attr']
-        
+
         # Get the base object at the specified level
         if level and level != 'root':
             base_obj = self.get_nested_value(obj, level)
@@ -507,18 +514,18 @@ class FileAnalyzer:
                 return
         else:
             base_obj = obj
-        
+
         # Extract all attribute values (grouping + value)
         all_attrs = grouping_attrs + [value_attr]
         all_values = []
         max_length = 0
-        
+
         for attr in all_attrs:
             values = self.extract_nested_values(base_obj, attr)
             all_values.append(values)
             if values:
                 max_length = max(max_length, len(values))
-        
+
         # Check that all attributes have consistent list lengths or are non-lists
         if max_length > 0:
             for i, values in enumerate(all_values):
@@ -527,16 +534,16 @@ class FileAnalyzer:
                     if len(values) > 1:
                         # Instead of throwing an error, just skip this record
                         return
-        
+
         # If no values found for the value attribute, return
-        value_values = all_values[-1]  # Last attribute is the value attribute  
+        value_values = all_values[-1]  # Last attribute is the value attribute
         if not value_values:
             return
-            
+
         # Set max_length to the length of the value attribute if no other attributes have values
         if max_length == 0:
             max_length = len(value_values)
-        
+
         # Handle group-by organization
         if self.group_by_attr:
             group_value = obj.get(self.group_by_attr, "unknown")
@@ -545,7 +552,7 @@ class FileAnalyzer:
             group_pivot_stats = self.pivot_stats[group_value]
         else:
             group_pivot_stats = self.pivot_stats
-        
+
         # Iterate through all combinations
         for i in range(max_length):
             # Extract grouping values for this iteration
@@ -561,7 +568,7 @@ class FileAnalyzer:
                         grouping_values.append(str(values[i]))
                 else:
                     grouping_values.append('unknown')
-            
+
             # Extract value for this iteration
             value_values = all_values[-1]  # Last attribute is the value attribute
             if value_values:
@@ -571,17 +578,17 @@ class FileAnalyzer:
                     value = value_values[i]
             else:
                 continue
-            
+
             if value is None or value == "":
                 continue
-                
+
             # Create grouping key
             grouping_key = tuple(grouping_values)
-            
+
             # Initialize grouping key if not exists
             if grouping_key not in group_pivot_stats:
                 group_pivot_stats[grouping_key] = {}
-            
+
             # Track the value
             value_str = str(value)
             if value_str not in group_pivot_stats[grouping_key]:
@@ -632,13 +639,13 @@ class FileAnalyzer:
         """Get a single nested value (not a list) from attribute path"""
         parts = attr_path.split('.')
         current = obj
-        
+
         for part in parts:
             if isinstance(current, dict) and part in current:
                 current = current[part]
             else:
                 return None
-        
+
         return current
 
     def iterate_obj_for_group(self, group_value, prior_key, obj):
@@ -662,6 +669,7 @@ class FileAnalyzer:
                     self.update_node_for_group(group_value, prior_key, "", item)
 
     def iterate_obj(self, prior_key, obj):
+        """Recursively iterate through object structure to build schema."""
         if isinstance(obj, dict):
             for key, value in obj.items():
                 if key:  # bad csvs have blank field names!
@@ -684,7 +692,7 @@ class FileAnalyzer:
         """Update node for a specific group"""
         attr_key = f"{prior_key}.{key}" if key else prior_key
         group_nodes = self.groups[group_value]["nodes"]
-        
+
         if attr_key not in group_nodes:
             group_nodes[attr_key] = Node(attr_key)
             group_nodes[attr_key].node_desc = attr_key.replace("root.", "")
@@ -731,6 +739,7 @@ class FileAnalyzer:
                     group_nodes[attr_key].unique_values[value] += 1
 
     def update_node(self, prior_key, key, value):
+        """Update or create a node with value statistics."""
         attr_key = f"{prior_key}.{key}" if key else prior_key
         if attr_key not in self.nodes:
             self.nodes[attr_key] = Node(attr_key)
@@ -1161,11 +1170,11 @@ class TreeReporter(BaseReporter):
         node_path = node.node_desc
 
         for node_name, child_node in self.analyzer.nodes.items():
-            if node_name == node_path or node_name == "root":
+            if node_name in (node_path, "root"):
                 continue
 
             # Check if this is a direct child
-            if node_path == "root" or node_path == self.analyzer.file_name:
+            if node_path in ("root", self.analyzer.file_name):
                 # Top-level children have no dots or just one segment
                 if '.' not in child_node.node_desc:
                     children.append(child_node)
@@ -1210,7 +1219,7 @@ class TreeReporter(BaseReporter):
         # Add sample values for leaf nodes with small value sets
         if node.node_type in ('str', 'int', 'float'):
             unique_cnt = len(node.unique_values)
-            if unique_cnt > 0 and unique_cnt <= 10:
+            if 0 < unique_cnt <= 10:
                 values = sorted(node.unique_values.keys(), key=lambda k: node.unique_values[k], reverse=True)[:5]
                 values_str = ", ".join([f"`{v}`" for v in values])
                 if unique_cnt > 5:
@@ -1318,7 +1327,7 @@ class MarkdownReporter(BaseReporter):
             def display_list_hierarchy(list_name, indent_level=0):
                 if list_name not in list_info:
                     return
-                count, parent = list_info[list_name]
+                count, _ = list_info[list_name]
                 indent = "  " * indent_level
                 lines.append(f"{indent}- {list_name}: {count:,} records")
 
@@ -1593,7 +1602,6 @@ class EnumerationReporter(BaseReporter):
 
         config = self.analyzer.enumerate_config
         grouping_attrs = config['grouping_attrs']
-        value_attr = config['value_attr']
 
         # Create header
         header = []
@@ -1758,12 +1766,13 @@ def element_to_dict(element):
             children[tag].append(child_dict)
         else:
             children[tag] = child_dict
-    
+
     result.update(children)
     return result
 
 
 def report_viewer(report):
+    """Display report using prettytable with pager."""
     table_object = prettytable.PrettyTable()
     table_object.horizontal_char = "\u2500"
     table_object.vertical_char = "\u2502"
@@ -1795,14 +1804,14 @@ USAGE EXAMPLES:
 Schema Analysis (discover file structure):
   %(prog)s data.jsonl -o schema.csv
   %(prog)s data.jsonl --group_by schema -o schema_by_type.csv
-  
+
 Code Enumeration (analyze specific attribute values):
   %(prog)s data.jsonl --enumerate "properties:type,country:number" -o analysis.csv
   %(prog)s data.jsonl --group_by schema=Identification --enumerate "properties:type:number" -o id_types.csv
-  
+
 Legacy Enumeration (backward compatibility):
   %(prog)s data.jsonl --enumerate "properties.type" -o codes.csv
-  
+
 Filtering:
   %(prog)s data.jsonl --filter "status=active" -o filtered_schema.csv
   %(prog)s data.jsonl --group_by schema=Person --enumerate "properties:name:identifier" -o person_names.csv
@@ -1810,12 +1819,12 @@ Filtering:
 ENUMERATION FORMATS:
   Legacy: --enumerate "attr1,attr2"          (lists code values in specified attributes)
   Pivot:  --enumerate "level:dims:value"     (cross-tabulates dimensions against values)
-  
+
   Example: --enumerate "properties:type,country:number"
     - Level: properties (base object level)
-    - Dimensions: type,country (grouping attributes) 
+    - Dimensions: type,country (grouping attributes)
     - Value: number (attribute being analyzed)
-    
+
 GROUP_BY FORMATS:
   Basic:     --group_by schema               (group statistics by schema)
   Filtered:  --group_by schema=Person        (group by schema, show only Person records)
@@ -1826,15 +1835,15 @@ GROUP_BY FORMATS:
                        help="Input file or directory path (supports CSV, JSON, JSONL, Parquet, XML)")
     parser.add_argument("-t", "--file_type",
                        help='File type: "csv", "jsonl", "json", "parquet", "xml" (auto-detected if not specified)')
-    parser.add_argument("-e", "--encoding", default="utf-8", 
+    parser.add_argument("-e", "--encoding", default="utf-8",
                        help="File encoding (default: utf-8)")
     parser.add_argument("-o", "--output_file",
                        help="Output CSV file path (required for --enumerate, optional for schema analysis)")
-    parser.add_argument("--top_values", type=int, default=5, 
+    parser.add_argument("--top_values", type=int, default=5,
                        help="Number of top values to display/analyze (default: 5)")
-    parser.add_argument("--filter", 
+    parser.add_argument("--filter",
                        help="Filter records: 'attribute=value' (e.g., 'status=active', 'type=Person')")
-    parser.add_argument("--group_by", 
+    parser.add_argument("--group_by",
                        help="Group analysis by attribute. Formats: 'attr' or 'attr=value' (e.g., 'schema' or 'schema=Person')")
     parser.add_argument("--enumerate",
                        help="""Enumerate code values. Formats:
@@ -1886,7 +1895,7 @@ Example: 'properties:type,country:number'""")
 
     proc_start_time = time.time()
     shut_down = 0
-    
+
     # Parse group_by parameter - check for filtering syntax
     group_by_attr = None
     group_by_filter = None
@@ -1895,7 +1904,7 @@ Example: 'properties:type,country:number'""")
             group_by_attr, group_by_filter = args.group_by.split('=', 1)
         else:
             group_by_attr = args.group_by
-    
+
     # Parse enumeration parameter - check for new pivot syntax
     enumerate_config = None
     if args.enumerate:
@@ -1910,15 +1919,15 @@ Example: 'properties:type,country:number'""")
         else:
             # Legacy syntax for backward compatibility
             enumerate_config = [attr.strip() for attr in args.enumerate.split(',')]
-    
+
     # Check for conflicting options
     if enumerate_config and not args.output_file:
         print("\nError: When using --enumerate, you must specify -o/--output_file for the enumeration CSV output.\n")
         sys.exit(1)
-    
+
     analyzer = FileAnalyzer(args.input_file, args.file_type, group_by_attr, enumerate_config)
     analyzer.top_value_count = args.top_values
-    
+
     # Set group_by filter if specified
     if group_by_filter:
         analyzer.group_by_filter = group_by_filter
@@ -2010,7 +2019,7 @@ Example: 'properties:type,country:number'""")
                     print("\n" + "="*60)
                     print("CODE ENUMERATION REPORT")
                     print("="*60)
-                    
+
                     if prettytable:
                         report_viewer(enum_report)
                     else:
@@ -2120,7 +2129,7 @@ Example: 'properties:type,country:number'""")
             output_lines.append("Note: Install prettytable for better formatted output: pip install prettytable")
             output_lines.append("Or use -o filename.csv to save report to CSV file")
             output_lines.append("")
-            
+
             # Use less pager for better viewing experience
             report_str = "\n".join(output_lines)
             try:

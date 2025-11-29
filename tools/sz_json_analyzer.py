@@ -1,16 +1,22 @@
 #! /usr/bin/env python3
+"""Analyze Senzing JSON/JSONL files for mapping quality and data issues.
+
+This tool validates mapped data before loading into Senzing, checking for:
+- Valid data sources and feature types
+- Feature population and uniqueness statistics
+- Unmapped/payload attributes
+- Data quality warnings and errors
+"""
 
 import argparse
 import csv
 import io
 import json
 import os
-import signal
 import subprocess
 import sys
 import time
 from contextlib import suppress
-from datetime import datetime
 
 try:
     import prettytable
@@ -19,7 +25,14 @@ except (ImportError, ModuleNotFoundError) as err:
 
 
 def get_config_data(config_file_name):
-    # ignore cached file IO errors as just for convenience
+    """Load Senzing configuration data from live instance or cached file.
+
+    Args:
+        config_file_name: Path to cached configuration JSON file.
+
+    Returns:
+        Tuple of (config_data dict, status message string).
+    """
     config_message = "Access to Senzing instance needed to get current configuration data!"
     config_data = None
     try:
@@ -43,7 +56,7 @@ def get_config_data(config_file_name):
             with open(config_file_name, "w") as f:
                 json.dump(config_data, f, indent=4)
 
-    except Exception as err:
+    except Exception as err:  # pylint: disable=broad-exception-caught
         config_message = err
         if os.path.exists(config_file_name):
             with suppress(Exception):
@@ -56,6 +69,7 @@ def get_config_data(config_file_name):
 
 # =========================
 class SzJsonAnalyzer:
+    """Analyzes Senzing JSON records for feature usage and data quality."""
 
     def __init__(self, config_data):
 
@@ -96,7 +110,14 @@ class SzJsonAnalyzer:
         self.feature_stats = {}
         self.message_stats = {"ERROR": {}, "WARNING": {}, "INFO": {}}
 
+        # Threshold constants for data quality warnings
+        self.low_population_percent = 25
+        self.low_f1_unique_percent = 80
+        self.low_ff_unique_percent = 60
+        self.low_fme_unique_percent = 50
+
     def register_attribute(self, attr_name):
+        """Register an attribute and look up its Senzing configuration metadata."""
         attr_data = {}
         if attr_name in self.attribute_lookup:
             attr_data = self.attribute_lookup[attr_name]
@@ -118,6 +139,7 @@ class SzJsonAnalyzer:
             self.mapped_attribute[attr_name] = {"ATTR_NAME": attr_name, "UNMAPPED": True}
 
     def add_to_features(self, features, errors, parent, attr_name, attr_value):
+        """Add an attribute value to the features dictionary for analysis."""
         if isinstance(attr_value, (list, dict)):
             errors.append(f"Expected integer or string for {attr_name}")
         else:
@@ -130,6 +152,7 @@ class SzJsonAnalyzer:
                 features[feature_key].append(attr_data)
 
     def update_feature_stats(self, feature, attribute, value):
+        """Update statistics for a feature attribute with a new value."""
         if attribute in self.feature_stats[feature]["attributes"]:
             self.feature_stats[feature]["attributes"][attribute]["count"] += 1
         else:
@@ -143,6 +166,7 @@ class SzJsonAnalyzer:
             self.feature_stats[feature]["attributes"][attribute]["values"][value] = 1
 
     def update_unmapped_stats(self, attr_name, attr_value):
+        """Update statistics for an unmapped (payload) attribute."""
         if attr_name in self.unmapped_stats:
             self.unmapped_stats[attr_name]["count"] += 1
         else:
@@ -153,6 +177,7 @@ class SzJsonAnalyzer:
             self.unmapped_stats[attr_name]["values"][attr_value] = 1
 
     def update_message_stats(self, cat, stat, row_num="n/a"):
+        """Record an error, warning, or info message with occurrence tracking."""
         row_num = f"row {row_num}" if isinstance(row_num, int) else row_num
         if stat not in self.message_stats[cat]:
             self.message_stats[cat][stat] = {"count": 1, "rows": [row_num]}
@@ -162,6 +187,7 @@ class SzJsonAnalyzer:
                 self.message_stats[cat][stat]["rows"].append(row_num)
 
     def analyze_json(self, input_data, input_row_num=None):
+        """Analyze a single JSON record and update feature/attribute statistics."""
         self.record_count += 1
 
         # print('-'*50)
@@ -220,8 +246,8 @@ class SzJsonAnalyzer:
 
         features_mapped = []
         attributes_mapped = []
-        for feature_key in features:
-            parent, feature, label = feature_key.split("|")
+        for feature_key, feature_data in features.items():
+            _, feature, label = feature_key.split("|")
             if feature in self.feature_stats:
                 self.feature_stats[feature]["count"] += 1
             else:
@@ -237,7 +263,7 @@ class SzJsonAnalyzer:
             possible_complete_feature = False
             populated_attr_list = []
             populated_attr_values = []
-            for attribute_data in sorted(features[feature_key], key=lambda k: k["ATTR_ID"]):
+            for attribute_data in sorted(feature_data, key=lambda k: k["ATTR_ID"]):
                 attribute = attribute_data["ATTR_CODE"]
                 value = attribute_data["ATTR_VALUE"]
                 if attribute_data["FELEM_CODE"] not in ("USAGE_TYPE", "USED_FROM_DT", "USED_THRU_DT"):
@@ -269,19 +295,19 @@ class SzJsonAnalyzer:
                 and "NAME_FULL" in populated_attr_list
                 and any(x in populated_attr_list for x in ["NAME_ORG", "NAME_LAST", "NAME_FIRST"])
             ):
-                message_list.append(["INFO", f"Only NAME_FULL should be mapped"])
+                message_list.append(["INFO", "Only NAME_FULL should be mapped"])
             if (
                 feature == "ADDRESS"
                 and "ADDR_FULL" in populated_attr_list
                 and any(x in populated_attr_list for x in ["ADDR_LINE1", "ADDR_CITY", "ADDR_STATE", "ADDR_POSTAL_CODE"])
             ):
-                message_list.append(["INFO", f"Only ADDR_FULL should be mapped"])
+                message_list.append(["INFO", "Only ADDR_FULL should be mapped"])
             if (
                 feature == "ADDRESS"
                 and "ADDR_FULL" not in populated_attr_list
                 and "ADDR_LINE1" not in populated_attr_list
             ):
-                message_list.append(["INFO", f"Incomplete ADDRESS (no ADDR_LINE1)"])
+                message_list.append(["INFO", "Incomplete ADDRESS (no ADDR_LINE1)"])
 
             if feature in self.required_attributes:  # wont be for datasource, record_id
                 for record in self.required_attributes[feature]:
@@ -331,6 +357,7 @@ class SzJsonAnalyzer:
         # input('wait')
 
     def get_report(self):
+        """Generate a tabular report of all collected statistics."""
         table_headers = [
             "Category",
             "Attribute",
@@ -360,10 +387,6 @@ class SzJsonAnalyzer:
             row[5] = round(row[4] / row[2] * 100.00, 1)
 
             # warn of low population or uniqueness
-            self.low_population_percent = 25
-            self.low_f1_unique_percent = 80
-            self.low_ff_unique_percent = 60
-            self.low_fme_unique_percent = 50
             if self.feature_lookup.get(feature):
                 if row[3] <= self.low_population_percent:
                     self.update_message_stats("WARNING", f"{feature} < {self.low_population_percent}% populated")
@@ -478,7 +501,6 @@ class SzJsonAnalyzer:
                         for value in self.message_stats[category][message]["rows"]:
                             i += 1
                             row[i] = value
-                            self.message_stats[category][message]["rows"]
                             if i == len(row) - 1:
                                 break
 
@@ -489,6 +511,8 @@ class SzJsonAnalyzer:
 
 # =========================
 class JsonlReader:
+    """Iterator for reading JSON objects from a JSONL file line by line."""
+
     def __init__(self, file_handle):
         self.file_handle = file_handle
 
@@ -501,6 +525,7 @@ class JsonlReader:
 
 # ----------------------------------------
 def format_pretty_table(table_rows):
+    """Format report as a colorized table using prettytable library."""
     table_object = prettytable.PrettyTable()
     table_object.horizontal_char = "\u2500"
     table_object.vertical_char = "\u2502"
@@ -517,18 +542,18 @@ def format_pretty_table(table_rows):
         "RESET": "\033[0m",
     }
 
-    # find notable errors and warnings to colorize
+    # find notable errors and warnings to colorize from table_rows
     missing_data_sources = []
     low_population_features = []
     low_unique_features = []
-    for message in analyzer.message_stats.get("ERROR", {}):
-        if message.startswith("DATA_SOURCE not found: "):
-            missing_data_sources.append(message.split()[-1])
-    for message in analyzer.message_stats.get("WARNING", {}):
-        if "populated" in message:
-            low_population_features.append(message.split()[0])
-        elif "unique" in message:
-            low_unique_features.append(message.split()[0])
+    for row in table_rows[1:]:
+        if row[0] == "ERROR" and row[1].startswith("DATA_SOURCE not found: "):
+            missing_data_sources.append(row[1].split()[-1])
+        elif row[0] == "WARNING":
+            if "populated" in row[1]:
+                low_population_features.append(row[1].split()[0])
+            elif "unique" in row[1]:
+                low_unique_features.append(row[1].split()[0])
 
     table_object.field_names = [f"{colors['HEADER']}{x}{colors['RESET']}" for x in table_rows[0]]
     for orig_row in table_rows[1:]:
@@ -573,6 +598,7 @@ def format_pretty_table(table_rows):
 
 
 def format_plain_table(table_rows):
+    """Format report as a plain text table without color or prettytable."""
     if not table_rows:
         return "No report data available.\n"
 
@@ -605,6 +631,7 @@ def format_plain_table(table_rows):
 
 # ----------------------------------------
 def format_csv_table(table_rows):
+    """Format report as CSV data."""
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerows(table_rows)
@@ -744,6 +771,7 @@ def format_markdown_table(table_rows):
 
 # ----------------------------------------
 def print_report(report_string):
+    """Display the report using less pager for scrollable output."""
     less = subprocess.Popen(["less", "-FMXSR"], stdin=subprocess.PIPE)
     try:
         less.stdin.write(report_string.encode("utf-8"))
@@ -755,18 +783,7 @@ def print_report(report_string):
 
 
 # ----------------------------------------
-def signal_handler(signal, frame):
-    print("USER INTERUPT! Shutting down ... (please wait)")
-    global shut_down
-    shut_down = True
-    return
-
-
-# ----------------------------------------
 if __name__ == "__main__":
-    shut_down = False
-    signal.signal(signal.SIGINT, signal_handler)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", help="the name of the input file to analyze")
     parser.add_argument("-o", "--output_file", dest="output_file", help="optional name of the output file")
@@ -783,38 +800,27 @@ if __name__ == "__main__":
     analyzer = SzJsonAnalyzer(config_data)
 
     input_file_handle = open(args.input_file, "r")
-    input_file_ext = os.path.splitext(args.input_file)[1].upper()
-    if input_file_ext == ".CSV":
-        sniffer = csv.Sniffer().sniff(input_file_handle.readline(), delimiters="|,\t")
-        input_file_handle.seek(0)
-        delimiter = sniffer.delimiter
-        if sniffer.delimiter == "\t":
-            dialect = "excel-tab"
-        elif sniffer.delimiter == "|":
-            csv.register_dialect("pipe", delimiter="|", quotechar='"')
-            dialect = "pipe"
-        else:
-            dialect = "excel"
-        reader = csv.DictReader(input_file_handle, dialect=csv_dialect)
-    else:
-        reader = JsonlReader(input_file_handle)
+    reader = JsonlReader(input_file_handle)
 
     proc_start_time = time.time()
     input_row_count = 0
-    for input_row in reader:
-        input_row_count += 1
-        analyzer.analyze_json(input_row, input_row_count)
-        if input_row_count % 10000 == 0:
-            eps = int(
-                float(input_row_count)
-                / (float(time.time() - proc_start_time if time.time() - proc_start_time != 0 else 0))
-            )
-            print(f"{input_row_count:,} rows processed at {eps:,} per second")
-        if shut_down:
-            break
+    interrupted = False
+    try:
+        for input_row in reader:
+            input_row_count += 1
+            analyzer.analyze_json(input_row, input_row_count)
+            if input_row_count % 10000 == 0:
+                eps = int(
+                    float(input_row_count)
+                    / (float(time.time() - proc_start_time if time.time() - proc_start_time != 0 else 0))
+                )
+                print(f"{input_row_count:,} rows processed at {eps:,} per second")
+    except KeyboardInterrupt:
+        print("\nUSER INTERRUPT! Shutting down...")
+        interrupted = True
 
     elapsed_mins = round((time.time() - proc_start_time) / 60, 1)
-    run_status = ("completed in" if not shut_down else "aborted after") + " %s minutes" % elapsed_mins
+    run_status = ("completed in" if not interrupted else "aborted after") + f" {elapsed_mins} minutes"
     print(f"{input_row_count:,} rows processed, {run_status}\n")
     input_file_handle.close()
 
