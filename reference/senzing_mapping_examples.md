@@ -46,10 +46,6 @@ Output JSON (1 record)
 }
 ```
 
-Lint
-- Command: `python lint_senzing_json.py --input examples/example1.json`
-- Expected: Pass (exit 0), no warnings
-
 ---
 
 ## Shot Example 2 — CSV (typed customer) → Senzing JSON
@@ -119,11 +115,6 @@ Output JSON (unknown type)
   "STATUS": "Active"
 }
 ```
-
-Lint
-- Files: `examples/example2_person.json`, `examples/example2_org.json`, `examples/example2_unknown.json`
-- Command: `python lint_senzing_json.py --input examples/example2_person.json`
-- Expected: Pass (exit 0), no warnings (repeat for the other two files)
 
 ## Shot Example 3 — Graph edges mapping (directors: person→org) → Senzing JSON
 
@@ -207,11 +198,6 @@ Output JSON (organization ORG3001)
 }
 ```
 
-Lint
-- Files: `examples/example3_person1.json`, `examples/example3_person2.json`, `examples/example3_org.json`
-- Command: `python lint_senzing_json.py --input examples/example3_person1.json`
-- Expected: Pass (exit 0), no warnings (repeat for the other files)
-
 ---
 
 ## Shot Example 4 — JSON bidirectional relationships → Senzing JSON
@@ -283,11 +269,6 @@ Output JSON (person P1002)
   ]
 }
 ```
-
-Lint
-- Files: `examples/example4_person1.json`, `examples/example4_person2.json`
-- Command: `python lint_senzing_json.py --input examples/example4_person2.json`
-- Expected: Pass (exit 0), no warnings (repeat for the other file)
 
 ---
 
@@ -369,11 +350,6 @@ Output JSON (organization, Italy)
 
 References: [Spec §Mapping Identifiers: "Identifier Classification Decision Tree"]; [Spec §Mapping Identifiers: "Required context"]; [Spec §Mapping Identifiers: "Everything else (last resort)"]
 
-Lint
-- Files: `examples/example6_org_uk.json`, `examples/example6_org_it.json`
-- Command: `python lint_senzing_json.py --input examples/example6_org_uk.json`
-- Expected: Pass (exit 0), no warnings (repeat for the IT file)
-
 ---
 
 ## Shot Example 5 — Graph (shared address mapped to persons) → Senzing JSON
@@ -439,11 +415,6 @@ Output JSON (person P7002)
 }
 ```
 
-Lint
-- Files: `examples/example5_person1.json`, `examples/example5_person2.json`
-- Command: `python lint_senzing_json.py --input examples/example5_person1.json`
-- Expected: Pass (exit 0), no warnings (repeat for the other file)
-
 ---
 
 ## Shot Example 7 — Embedded entity (contact → employer org) → Senzing JSON
@@ -505,8 +476,3 @@ Output JSON (organization)
 Notes
 - The org RECORD_ID (`ORG-2a9e3c5f`) represents a deterministic hash of normalized `NAME_ORG` + `ADDR_FULL` (example value shown).
 - Use a stable normalization recipe before hashing (trim/casefold/collapse whitespace/punctuation).
-
-Lint
-- Files: `examples/example7_person.json`, `examples/example7_org.json`
-- Command: `python lint_senzing_json.py --input examples/example7_person.json`
-- Expected: Pass (exit 0), no warnings (same for the org file)
