@@ -186,15 +186,33 @@ class JSONReader(FileReader):
         return iter(self._data)
 
 
+class ParseError:
+    """Sentinel class to indicate a parse error during iteration."""
+
+    def __init__(self, message):
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+
 class JSONLReader(FileReader):
     """Reader for JSONL (JSON Lines) files."""
 
     def open(self):
         self._file_handle = open(self.file_path, "r", encoding=self.encoding)
+        self._line_number = 0
 
     def __iter__(self):
         for line in self._file_handle:
-            yield json.loads(line)
+            self._line_number += 1
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                yield json.loads(line)
+            except json.JSONDecodeError as e:
+                yield ParseError(f"Invalid JSON on line {self._line_number}: {e}")
 
 
 class XMLReader(FileReader):
@@ -1946,6 +1964,16 @@ Example: 'properties:type,country:number'""")
         analyzer.groups = {}
         print(f"Auto-grouping by source file (processing {len(file_list)} files)\n")
 
+    # Error handling constants
+    MAX_ERRORS_DISPLAYED = 10
+    ERROR_THRESHOLD_PCT = 10
+    MIN_RECORDS_FOR_THRESHOLD = 100
+    MAX_CONSECUTIVE_ERRORS = 10
+
+    # Error tracking variables
+    error_count = 0
+    consecutive_errors = 0
+
     try:
         file_num = 0
         for file_name in file_list:
@@ -1980,6 +2008,33 @@ Example: 'properties:type,country:number'""")
                     analyzer.xml_namespaces = reader.namespaces
 
                 for row in reader:
+                    # Check for parse errors (returned as ParseError sentinel)
+                    if isinstance(row, ParseError):
+                        error_count += 1
+                        consecutive_errors += 1
+                        if error_count <= MAX_ERRORS_DISPLAYED:
+                            print(f"ERROR: {row}", file=sys.stderr)
+                        elif error_count == MAX_ERRORS_DISPLAYED + 1:
+                            print("(additional errors suppressed)", file=sys.stderr)
+
+                        # Check consecutive errors threshold
+                        if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                            print(f"\nABORTED: {MAX_CONSECUTIVE_ERRORS} consecutive parse errors", file=sys.stderr)
+                            shut_down = 1
+                            break
+
+                        # Check percentage threshold (after minimum records)
+                        total_processed = analyzer.record_count + error_count
+                        if total_processed >= MIN_RECORDS_FOR_THRESHOLD:
+                            error_pct = (error_count / total_processed) * 100
+                            if error_pct >= ERROR_THRESHOLD_PCT:
+                                print(f"\nABORTED: Error rate {error_pct:.1f}% exceeds {ERROR_THRESHOLD_PCT}% threshold", file=sys.stderr)
+                                shut_down = 1
+                                break
+                        continue
+
+                    consecutive_errors = 0  # Reset on success
+
                     # Add schema identifier if auto-grouping
                     if auto_group_by_file and isinstance(row, dict):
                         row["_source_file"] = schema_name
@@ -1994,11 +2049,18 @@ Example: 'properties:type,country:number'""")
                     # Use the new process_record method that handles grouping
                     analyzer.process_record(row)
 
+                if shut_down:
+                    break  # Exit file loop if aborted
+
     except KeyboardInterrupt:
         shut_down = 9
 
-    status = "complete" if shut_down == 0 else "interrupted"
-    print(f"\n{analyzer.record_count:,} rows read, file {status}\n")
+    status = "complete" if shut_down == 0 else ("aborted" if shut_down == 1 else "interrupted")
+    print(f"\n{analyzer.record_count:,} rows read, file {status}")
+    if error_count > 0:
+        print(f"{error_count:,} records skipped due to parse errors\n")
+    else:
+        print()
 
     # Calculate table contexts for proper percentage calculations
     analyzer.calculate_table_contexts()

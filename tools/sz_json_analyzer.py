@@ -515,12 +515,22 @@ class JsonlReader:
 
     def __init__(self, file_handle):
         self.file_handle = file_handle
+        self.line_number = 0
 
     def __iter__(self):
         return self
 
-    def __next__(self):  # Python 2: def next(self)
-        return json.loads(next(self.file_handle))
+    def __next__(self):
+        while True:
+            line = next(self.file_handle)
+            self.line_number += 1
+            line = line.strip()
+            if not line:  # Skip blank lines
+                continue
+            try:
+                return json.loads(line)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Invalid JSON on line {self.line_number}: {e}") from e
 
 
 # ----------------------------------------
@@ -783,7 +793,137 @@ def print_report(report_string):
 
 
 # ----------------------------------------
+def self_test():
+    """Run self-test with embedded test records covering features, payload, errors, warnings, and info."""
+    print("Running analyzer self-test...\n")
+
+    # Test records designed to exercise all report sections:
+    # - FEATURES: NAME, ADDRESS, EMAIL, PHONE, SSN, DOB, PASSPORT
+    # - PAYLOAD: Custom attributes (CUSTOMER_ID, RISK_SCORE)
+    # - ERROR: Unknown DATA_SOURCE
+    # - WARNING: Low population features (<25%)
+    # - INFO: NAME_FULL with NAME_FIRST (only NAME_FULL should be mapped)
+    test_records = [
+        # Record 1: Full featured person with payload
+        {
+            "DATA_SOURCE": "CUSTOMERS",
+            "RECORD_ID": "1001",
+            "NAME_FULL": "John Smith",
+            "NAME_FIRST": "John",  # Triggers INFO: only NAME_FULL should be mapped
+            "ADDR_FULL": "123 Main St, Springfield, IL 62701",
+            "PHONE_NUMBER": "555-1234",
+            "EMAIL_ADDRESS": "john.smith@email.com",
+            "CUSTOMER_ID": "C-1001",  # Payload attribute
+            "RISK_SCORE": "LOW"  # Payload attribute
+        },
+        # Record 2: Person with SSN
+        {
+            "DATA_SOURCE": "CUSTOMERS",
+            "RECORD_ID": "1002",
+            "NAME_FULL": "Jane Doe",
+            "SSN_NUMBER": "123-45-6789",
+            "PHONE_NUMBER": "555-5678",
+            "CUSTOMER_ID": "C-1002"
+        },
+        # Record 3: Minimal person
+        {
+            "DATA_SOURCE": "CUSTOMERS",
+            "RECORD_ID": "1003",
+            "NAME_FULL": "Bob Wilson",
+            "EMAIL_ADDRESS": "bob@email.com"
+        },
+        # Record 4: Watchlist entry with DOB (triggers ERROR: unknown DATA_SOURCE)
+        {
+            "DATA_SOURCE": "WATCHLIST",
+            "RECORD_ID": "W001",
+            "NAME_FULL": "John Smith",
+            "DATE_OF_BIRTH": "1985-03-15"
+        },
+        # Record 5: Watchlist with passport
+        {
+            "DATA_SOURCE": "WATCHLIST",
+            "RECORD_ID": "W002",
+            "NAME_FULL": "Robert Wilson",
+            "PASSPORT_NUMBER": "AB123456",
+            "PASSPORT_COUNTRY": "US"
+        }
+    ]
+
+    config_file_name = f"{os.path.dirname(os.path.abspath(sys.argv[0]))}{os.path.sep}sz_default_config.json"
+    config_data, config_message = get_config_data(config_file_name)
+    print(f"{config_message}\n")
+    if not config_data:
+        print("FAIL: Could not load configuration data")
+        return 1
+
+    analyzer = SzJsonAnalyzer(config_data)
+
+    for i, record in enumerate(test_records, 1):
+        analyzer.analyze_json(record, i)
+
+    print(f"{len(test_records)} test records analyzed\n")
+
+    report_table = analyzer.get_report()
+
+    # Verify expected sections exist
+    has_features = False
+    has_payload = False
+    has_error = False
+    has_warning = False
+    has_info = False
+
+    for row in report_table:
+        if row[0] == "FEATURES":
+            has_features = True
+        elif row[0] == "PAYLOAD":
+            has_payload = True
+        elif row[0] == "ERROR":
+            has_error = True
+        elif row[0] == "WARNING":
+            has_warning = True
+        elif row[0] == "INFO":
+            has_info = True
+
+    print("Report sections found:")
+    print(f"  ✓ FEATURES: {has_features}")
+    print(f"  ✓ PAYLOAD: {has_payload}")
+    print(f"  ✓ ERROR: {has_error}")
+    print(f"  ✓ WARNING: {has_warning}")
+    print(f"  ✓ INFO: {has_info}")
+
+    # Test JSON error handling via JsonlReader
+    print("\nTesting JSON error handling...")
+    test_jsonl = '{"DATA_SOURCE":"TEST","RECORD_ID":"1","NAME_FULL":"Valid"}\ninvalid json\n{"DATA_SOURCE":"TEST","RECORD_ID":"2","NAME_FULL":"Also Valid"}\n'
+    reader = JsonlReader(io.StringIO(test_jsonl))
+
+    valid_count = 0
+    error_count = 0
+    for _ in range(10):  # Max iterations to prevent infinite loop
+        try:
+            next(reader)
+            valid_count += 1
+        except StopIteration:
+            break
+        except ValueError:
+            error_count += 1
+
+    json_error_handling_ok = (valid_count == 2 and error_count == 1)
+    print(f"  ✓ JSON error handling: {json_error_handling_ok} (valid={valid_count}, errors={error_count})")
+
+    if has_features and has_payload and has_error and has_warning and json_error_handling_ok:
+        print("\n✅ Self-test PASSED - analyzer is functional")
+        return 0
+    else:
+        print("\n❌ Self-test FAILED - missing expected report sections or JSON error handling failed")
+        return 1
+
+
+# ----------------------------------------
 if __name__ == "__main__":
+    # Check for --self-test before argparse (which requires input_file)
+    if len(sys.argv) >= 2 and sys.argv[1] == "--self-test":
+        sys.exit(self_test())
+
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", help="the name of the input file to analyze")
     parser.add_argument("-o", "--output_file", dest="output_file", help="optional name of the output file")
@@ -805,8 +945,10 @@ if __name__ == "__main__":
     proc_start_time = time.time()
     input_row_count = 0
     interrupted = False
-    try:
-        for input_row in reader:
+    json_errors = []
+    while True:
+        try:
+            input_row = next(reader)
             input_row_count += 1
             analyzer.analyze_json(input_row, input_row_count)
             if input_row_count % 10000 == 0:
@@ -815,13 +957,26 @@ if __name__ == "__main__":
                     / (float(time.time() - proc_start_time if time.time() - proc_start_time != 0 else 0))
                 )
                 print(f"{input_row_count:,} rows processed at {eps:,} per second")
-    except KeyboardInterrupt:
-        print("\nUSER INTERRUPT! Shutting down...")
-        interrupted = True
+        except StopIteration:
+            break
+        except KeyboardInterrupt:
+            print("\nUSER INTERRUPT! Shutting down...")
+            interrupted = True
+            break
+        except ValueError as e:
+            json_errors.append(str(e))
+            if len(json_errors) <= 10:  # Only print first 10 errors
+                print(f"ERROR: {e}", file=sys.stderr)
 
     elapsed_mins = round((time.time() - proc_start_time) / 60, 1)
     run_status = ("completed in" if not interrupted else "aborted after") + f" {elapsed_mins} minutes"
-    print(f"{input_row_count:,} rows processed, {run_status}\n")
+    if json_errors:
+        error_summary = f", {len(json_errors)} JSON error(s)"
+        if len(json_errors) > 10:
+            print(f"... and {len(json_errors) - 10} more JSON errors", file=sys.stderr)
+    else:
+        error_summary = ""
+    print(f"{input_row_count:,} rows processed{error_summary}, {run_status}\n")
     input_file_handle.close()
 
     print("\ncreating report ...\n")
@@ -843,4 +998,4 @@ if __name__ == "__main__":
         # Only display colorized output if no output file specified
         report_output = format_pretty_table(report_table) if prettytable else format_plain_table(report_table)
         print_report(report_output)
-    sys.exit(0)
+    sys.exit(1 if json_errors else 0)
