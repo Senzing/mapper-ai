@@ -2,7 +2,7 @@
 
 AI-assisted toolkit for mapping any data source to Senzing entity resolution format.
 
-> **Note:** This toolkit is designed for developing and testing mappers in a test environment, not for production data loading.
+> **Note:** This toolkit is designed for developing and testing mappers in a development or test environment, not for production data loading.
 
 ## The Complete Mapping Workflow
 
