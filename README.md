@@ -2,6 +2,8 @@
 
 AI-assisted toolkit for mapping any data source to Senzing entity resolution format.
 
+> **Note:** This toolkit is designed for developing and testing mappers in a test environment, not for production data loading.
+
 ## The Complete Mapping Workflow
 
 ### 1. Analyze Source Data
@@ -60,6 +62,8 @@ This generates a comprehensive report showing:
 
 ### 5. Configure Data Sources
 
+> **Requires:** Initialized Senzing environment with `sz_configtool` available.
+
 If the analyzer reports unknown DATA_SOURCE values, configure them:
 
 ```bash
@@ -71,6 +75,8 @@ source ~/.bashrc && sz_configtool -f project_config.g2c
 ```
 
 ### 6. Load into Senzing
+
+> **Requires:** Initialized Senzing environment with `sz_file_loader` available.
 
 Load the validated JSONL into Senzing:
 
@@ -84,6 +90,8 @@ source ~/.bashrc && sz_file_loader -f output.jsonl
 - ✅ Data sources configured
 
 ### 7. Analyze Entity Resolution Results
+
+> **Requires:** Initialized Senzing environment with `sz_snapshot` available.
 
 After loading, generate a snapshot to analyze match quality:
 
