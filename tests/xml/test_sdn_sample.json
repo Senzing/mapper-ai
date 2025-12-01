@@ -1,0 +1,17 @@
+{
+  "DATA_SOURCE": "OFAC_SDN",
+  "RECORD_ID": "36",
+  "FEATURES": [
+    { "RECORD_TYPE": "PERSON" },
+    { "NAME_TYPE": "PRIMARY", "NAME_FIRST": "Ahmad", "NAME_LAST": "Al-Rashid" },
+    { "NAME_TYPE": "AKA", "NAME_FULL": "Ahmed Al Rasheed" },
+    { "ADDR_LINE1": "123 Damascus Street", "ADDR_CITY": "Damascus", "ADDR_COUNTRY": "SY" },
+    { "DATE_OF_BIRTH": "1975-03-15" },
+    { "PASSPORT_NUMBER": "A1234567", "PASSPORT_COUNTRY": "SY" },
+    { "NATIONAL_ID_TYPE": "NATIONAL_ID", "NATIONAL_ID_NUMBER": "12345678901", "NATIONAL_ID_COUNTRY": "SY" },
+    { "REL_ANCHOR_DOMAIN": "OFAC_SDN", "REL_ANCHOR_KEY": "36" },
+    { "REL_POINTER_DOMAIN": "OFAC_SDN", "REL_POINTER_KEY": "173", "REL_POINTER_ROLE": "ASSOCIATE_OF" }
+  ],
+  "COMMENT": "Member of sanctioned organization",
+  "LIST_TYPE": "SDN List"
+}

@@ -7,3 +7,13 @@
 .history
 
 .mypy_cache
+
+# Large test data files (exceed GitHub 100MB limit)
+tests/xml/sdn_advanced.xml
+tests/json/rows.json
+tests/icij/nodes-entities.csv
+tests/icij/nodes-officers.csv
+tests/icij/icij_mapped.jsonl
+tests/icij/nodes-addresses.csv
+tests/icij/full-oldb.LATEST.zip
+tests/icij/relationships.csv

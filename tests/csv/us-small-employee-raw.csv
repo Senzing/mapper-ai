@@ -1,0 +1,39 @@
+emp_num,last_name,first_name,middle_name,addr1,city,state,zip,home_phone,dob,ssn,job_category,job_title,hire_date,salary,rehire_flag,employer_name,employer_addr,id_type,id_number,id_country,manager_id,sherrifs_card
+1,Sheehan,Jamie,H,2280 Stoney Lonesome Road,Pittston,PA,18640,570-300-5826,4/13/69,189-50-0966,key executive,President,1/10/10,50k,null,ABC Company,"111 First St, anytown USA",DL,N9123912,NV,,
+2,Mcpherson,Kimberly,J,3483 Alpaca Way,Anaheim,CA,92806,714-762-0551,10/13/70,624-43-3201,key executive,President and CEO ,2/20/12,100k,null,ABC Company,"111 First St, anytown USA",DL,N676555,NV,1,
+3,Spector,Oscar,A,4110 Smith Street,Holden,MA,1520,508-829-6577,8/5/57,034-28-9551,former executive,Vice president of marketing division (former),3/13/13,75k,null,ABC Company,"111 First St, anytown USA",PP,123234568,US,1,
+4,Hammond,Frances,T,2447 Crummit Lane,Platte Center,NE,68653,402-246-4343,7/8/71,506-31-4606,Sales person,Inside sales leader,1/10/10,50k,null,ABC Company,"111 First St, anytown USA",student_id,D333,,3,
+5,Furman,Angela,D,1223 Granville Lane,West Orange,NJ,7052,973-501-2496,8/12/65,140-42-9982,management,Level 1 manager,2/20/12,100k,null,ABC Company,"111 First St, anytown USA",DL,N019223,NV,2,
+6,Angel,Haywood,E,1646 Hott Street,Oklahoma City,OK,73129,405-648-1710,8/2/53,446-14-1038,management,Level 2 manage,3/13/13,75k,null,ABC Company,"111 First St, anytown USA",DL,N019224,NV,2,
+7,Martin,Gordon,T,963 Maple Street,Anaheim,CA,92805,714-387-2863,3/28/64,546-95-7680,sales,Senior sales person,1/10/10,50k,null,ABC Company,"111 First St, anytown USA",PP,4356456,US,12,"A224-5698, B232-4344"
+8,Martin,Martha,P,4233 Grant View Drive,New Berlin,WI,53151,414-440-8310,9/24/73,396-23-0121,sales,Senior sales person,2/20/12,100k,null,ABC Company,"111 First St, anytown USA",PP,3455444,CA,12,B234-6666
+9,Mooney,Gloria,J,2181 Twin Willow Lane,Fayetteville,NC,28301,910-480-6034,9/24/57,689-01-5135,sales,Junior sales person,3/13/13,75k,null,ABC Company,"111 First St, anytown USA",,,,12,A234-3455
+10,Beaton,Joseph,A,2447 Willis Avenue,Mayo,FL,32066,386-294-6311,7/10/63,266-87-0747,sales,Junior sales person,1/10/10,50k,null,ABC Company,"111 First St, anytown USA",,,,12,A123-4544
+11,Covington,John,J,4201 Terra Cotta Street,Remer,MN,56672,218-566-5425,8/10/61,477-33-1025,sales,Junior sales person,2/20/12,100k,null,ABC Company,"111 First St, anytown USA",,,,12,"B162-1233,B232-4344"
+12,Peters,Joanne,R,2933 Memory Lane,Hickory Hills,IL,60457,815-954-3337,8/25/53,335-04-6125,sales,Head of sales,3/13/13,75k,null,ABC Company,"111 First St, anytown USA",,,,1,A132-0544
+13,Reed,Lisa,C,2517 Fittro Street,Fordyce,AR,71742,294-6311,5/28/81,678-03-2204,accounting,Bookkeeper I,1/10/10,50k,null,ABC Company,"111 First St, anytown USA",,,,2,
+14,Alvarez,John,M,1270 Hannah Street,Hickory,NC,28601,828-312-4989,6/8/55,684-09-0174,accounting,Bookkeeper II,2/20/12,100k,null,ABC Company,"111 First St, anytown USA",,,,2,
+15,Parkins,Jenna,R,3201 Wilmar Farm Road,Lanham,MD,20706,240-244-3626,5/13/60,212-06-2688,key executive,President,3/13/13,75k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+17,Givens,Lisa,G,2940 Hillview Drive,Ringgold,GA,30736,706-965-5911,12/23/62,668-07-7298,key executive,President and CEO ,1/10/10,50k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+18,Sadler,Robert,D,4940 White Avenue,Aransas Pass,TX,78336,361-758-5781,2/14/76,460-15-1871,former executive,Vice president of marketing division (former),2/20/12,100k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+19,Mccarver,John,M,3210 Butternut Lane,Carbondale,IL,62901,618-549-9232,3/12/58,477-33-1025,Sales person,Inside sales leader,3/13/13,75k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+21,Shows,Gisela,R,2791 Elk Street,Irvine,CA,92714,949-724-2475,6/18/55,550-04-5436,management,Level 1 manager,1/10/10,50k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+22,West,Felicia,D,1651 Hardesty Street,Albany,NY,12207,518-471-9888,2/25/70,102-68-2636,management,Level 2 manage,2/20/12,100k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+23,Thornton,Rafael,J,2151 Melville Street,Jackson,TN,38301,731-325-3274,11/12/40,410-33-3575,sales,Senior sales person,3/13/13,75k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+24,Owen,Mitchel,C,4491 Finwood Road,Long Branch,NJ,7740,732-483-6139,5/25/60,149-10-2099,sales,Senior sales person,1/10/10,50k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+25,Galindo,Peggy,M,2248 Hinkle Deegan Lake Road,Binghamton,NY,13901,607-223-1314,5/15/48,057-22-1152,accounting,Bookkeeper I,2/20/12,100k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+26,Walker,Ryan,M,550 Fittro Street,Winthrop,AR,71866,870-381-5401,6/16/67,429-36-0252,accounting,Bookkeeper II,3/13/13,75k,null,BNC Connections,"222 Second St, anytown USA",,,,,
+27,Neal,Lisa,E,2928 Modoc Alley,Meridian,ID,83642,302-9992,9/13/66,519-65-1042,key executive,President,1/10/10,50k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+28,Gravelle,Scott,C,4295 Kenwood Place,Fort Lauderdale,FL,33306,954-563-4561,12/11/78,267-34-2087,key executive,President and CEO ,2/20/12,100k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+29,Genovese,Joseph,M,303 Adams Drive,Houston,TX,77060,979-318-7197,7/26/40,455-08-8964,former executive,Vice president of marketing division (former),3/13/13,75k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+30,Strickland,Hubert,T,3094 Foley Street,Ft Lauderdale,FL,33311,954-651-9219,8/15/66,766-48-5761,Sales person,Inside sales leader,1/10/10,50k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+31,Leblanc,Darin,A,1346 Emerson Road,Calhoun,LA,71225,318-644-0836,8/10/77,662-12-1743,management,Level 1 manager,2/20/12,100k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+32,Henderson,Benita,J,3169 Riverwood Drive,Redding,CA,96001,530-354-8708,4/27/66,549-68-6648,management,Level 2 manage,3/13/13,75k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+33,Farrell,Jennifer,C,448 Airplane Avenue,Wallingford,CT,6492,860-881-7944,11/14/42,041-46-2515,sales,Senior sales person,1/10/10,50k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+34,Escobedo,Nicole,J,3612 Nancy Street,Mebane,NC,27302,919-568-9421,3/12/44,686-09-6494,sales,Senior sales person,2/20/12,100k,null,BBB Business,"333 Third St, Anytown USA",,,,,
+35,Kendrick,Lawrence,H,2897 Tuna Street,Bloomfield Township,MI,48302,810-820-3648,9/25/71,383-18-5252,sales,Junior sales person,3/13/13,75k,null,ABC Company,"111 First St, anytown USA",,,,,
+36,Cullum,Karen,C,1705 Oak Drive,Ticonderoga,NY,12883,518-585-6813,6/5/71,123-14-9271,sales,Junior sales person,3/14/13,75k,null,ABC Company,"111 First St, anytown USA",,,,,
+37,Garcia,Michael,V,4094 Hilltop Street,Wilbraham,MA,1095,413-596-8997,11/15/49,024-56-2346,sales,Junior sales person,3/15/13,75k,null,ABC Company,"111 First St, anytown USA",,,,,
+38,Fairweather,Jennifer,H,1247 Lucy Lane,Evansville,IN,47714,812-469-2613,8/4/85,309-25-6689,sales,Head of sales,3/16/13,75k,null,ABC Company,"111 First St, anytown USA",,,,,
+39,Parks,Judith,M,3740 Sycamore Fork Road,Pompano Beach,FL,33064,954-214-3882,5/6/74,592-09-3571,accounting,Bookkeeper I,3/17/13,75k,null,ABC Company,"111 First St, anytown USA",,,,,
+40,Lochner,Belinda,W,913 Cliffside Drive,Syracuse,NY,13224,607-345-1594,7/17/52,091-60-3273,accounting,Bookkeeper II,3/18/13,75k,null,ABC Company,"111 First St, anytown USA",,,,,
