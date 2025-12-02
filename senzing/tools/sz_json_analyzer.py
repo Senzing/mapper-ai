@@ -334,12 +334,12 @@ class SzJsonAnalyzer:
             message_list.append(["INFO", "NAME missing"])
         if "NAME" in features_mapped and len(features_mapped) == 1:
             message_list.append(["INFO", "Only NAME is mapped"])
-            # this should be if F1 or FF or exculsive as well
+            # this should be if F1 or FF or exclusive as well
 
         if "NAME_ORG" in attributes_mapped and any(x in attributes_mapped for x in ["NAME_LAST", "NAME_FIRST"]):
             message_list.append(["WARNING", "PERSON AND ORG on same record"])
 
-        # is dob parseable
+        # is dob parsable
         # companies should not have DOB, PASSPORT or DRLIC
         # people should not have business addresses
 
@@ -814,7 +814,7 @@ def self_test():
             "PHONE_NUMBER": "555-1234",
             "EMAIL_ADDRESS": "john.smith@email.com",
             "CUSTOMER_ID": "C-1001",  # Payload attribute
-            "RISK_SCORE": "LOW"  # Payload attribute
+            "RISK_SCORE": "LOW",  # Payload attribute
         },
         # Record 2: Person with SSN
         {
@@ -823,30 +823,20 @@ def self_test():
             "NAME_FULL": "Jane Doe",
             "SSN_NUMBER": "123-45-6789",
             "PHONE_NUMBER": "555-5678",
-            "CUSTOMER_ID": "C-1002"
+            "CUSTOMER_ID": "C-1002",
         },
         # Record 3: Minimal person
-        {
-            "DATA_SOURCE": "CUSTOMERS",
-            "RECORD_ID": "1003",
-            "NAME_FULL": "Bob Wilson",
-            "EMAIL_ADDRESS": "bob@email.com"
-        },
+        {"DATA_SOURCE": "CUSTOMERS", "RECORD_ID": "1003", "NAME_FULL": "Bob Wilson", "EMAIL_ADDRESS": "bob@email.com"},
         # Record 4: Watchlist entry with DOB (triggers ERROR: unknown DATA_SOURCE)
-        {
-            "DATA_SOURCE": "WATCHLIST",
-            "RECORD_ID": "W001",
-            "NAME_FULL": "John Smith",
-            "DATE_OF_BIRTH": "1985-03-15"
-        },
+        {"DATA_SOURCE": "WATCHLIST", "RECORD_ID": "W001", "NAME_FULL": "John Smith", "DATE_OF_BIRTH": "1985-03-15"},
         # Record 5: Watchlist with passport
         {
             "DATA_SOURCE": "WATCHLIST",
             "RECORD_ID": "W002",
             "NAME_FULL": "Robert Wilson",
             "PASSPORT_NUMBER": "AB123456",
-            "PASSPORT_COUNTRY": "US"
-        }
+            "PASSPORT_COUNTRY": "US",
+        },
     ]
 
     config_file_name = f"{os.path.dirname(os.path.abspath(sys.argv[0]))}{os.path.sep}sz_default_config.json"
@@ -907,7 +897,7 @@ def self_test():
         except ValueError:
             error_count += 1
 
-    json_error_handling_ok = (valid_count == 2 and error_count == 1)
+    json_error_handling_ok = valid_count == 2 and error_count == 1
     print(f"  ✓ JSON error handling: {json_error_handling_ok} (valid={valid_count}, errors={error_count})")
 
     if has_features and has_payload and has_error and has_warning and json_error_handling_ok:
