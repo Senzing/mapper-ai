@@ -93,15 +93,29 @@ src_paths = ["examples", "src", "tests"]
 [tool.pylint]
 ignored-argument-names = "args|kwargs"
 disable = [
+  "attribute-defined-outside-init",
+  "cell-var-from-loop",
   "consider-using-with",
+  "import-error",
+  "import-outside-toplevel",
   "invalid-name",
   "line-too-long",
+  "no-else-return",
+  "no-member",
   "redefined-outer-name",
+  "too-few-public-methods",
+  "too-many-arguments",
   "too-many-branches",
+  "too-many-instance-attributes",
   "too-many-lines",
   "too-many-locals",
+  "too-many-nested-blocks",
+  "too-many-positional-arguments",
+  "too-many-public-methods",
+  "too-many-return-statements",
   "too-many-statements",
   "unspecified-encoding",
+  "unused-argument",
 ]
 good-names = ["mapper-ai"]
 ignore = ["__init__.py", "docs/source/conf.py"]

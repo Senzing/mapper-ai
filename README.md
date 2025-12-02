@@ -1,77 +1,134 @@
 # mapper-ai
 
-This repository contains AI-ready Senzing documentation and instructions that guide you through the process of mapping your data to Senzing with AI. 
+AI-assisted toolkit for mapping any data source to Senzing entity resolution format.
 
-## What's Inside
+> **Note:** This toolkit is designed for developing and testing mappers in a development or test environment, not for production data loading.
 
-### RAG Documents
+## The Complete Mapping Workflow
 
-- [rag/senzing_mapping_assistant_prompt.md](rag/senzing_mapping_assistant_prompt.md): master mapping instructions/prompt with rules, templates, and examples.
-- [rag/senzing_mapping_examples.md](rag/senzing_mapping_examples.md): curated reference examples that show correct Senzing JSON patterns.
-- [rag/senzing_entity_specification.md](rag/senzing_entity_specification.md): authoritative, AI-ready Senzing Entity Spec (this repo is the source of truth).
-- [rag/lint_senzing_json.py](rag/lint_senzing_json.py): JSON schema linter for validating generated Senzing JSON/JSONL.
-- [rag/identifier_crosswalk.json](rag/identifier_crosswalk.json): canonical identifier types, aliases, and mapping guidance.
-- [rag/usage_type_crosswalk.json](rag/usage_type_crosswalk.json): canonical name, address, phone types, aliases and mapping guidance. 
+### 1. Analyze Source Data
 
-## How to Use This Repository
+Profile your source file to understand its structure:
 
-### Overview
-This repository provides everything needed to guide an AI assistant through the Senzing mapping process:
+```bash
+python3 senzing/tools/sz_schema_generator.py source.csv -o source_schema.md
+```
 
-1. **System Prompt:** [senzing_mapping_assistant_prompt.md](rag/senzing_mapping_assistant_prompt.md) contains the structured workflow that guides the AI through the 5-stage mapping process.
-2. **Reference Documents:** The specification, examples, and linter provide the knowledge base the AI needs to make correct mapping decisions.
-3. **Crosswalks:** Organization-wide standards for identifier and usage type transformations that ensure consistency across all mapping projects.
+Outputs a markdown report showing all fields, data types, population percentages, uniqueness, and sample values. This provides essential context for the AI mapping assistant.
 
-### Setup Instructions
+### 2. Develop the Mapper (AI-Assisted)
 
-#### 1. Load Reference Documents
-Upload or load these files into your AI assistant or agentic workflow as **knowledge base/RAG documents**:
-- `rag/senzing_entity_specification.md` — authoritative Senzing entity structure
-- `rag/senzing_mapping_examples.md` — curated reference examples
-- `rag/lint_senzing_json.py` — validation tool (must be executable)
-- `rag/identifier_crosswalk.json` — your organization's identifier type mappings
-- `rag/usage_type_crosswalk.json` — your organization's usage type mappings
+Paste this into any AI assistant (Claude, ChatGPT, Grok, etc.):
 
-#### 2. Configure System Prompt
-Use the contents of `rag/senzing_mapping_assistant_prompt.md` as your **system prompt** (or initial instruction). This prompt guides the AI through:
-- Stage 1: Initialization and verification
-- Stage 2: Schema/data inventory (anti-hallucination)
-- Stage 3: Planning (entity identification, DATA_SOURCE codes)
-- Stage 4: Field-by-field mapping with validation
-- Stage 5: Generate documentation and implementation code
+```
+Please fetch and follow the instructions at: https://raw.githubusercontent.com/senzing/mapper-ai/main/senzing/prompts/senzing_mapping_assistant.md
+```
 
-#### 3. Customize Crosswalks (Optional)
-The crosswalk files contain your organization's standard transformations:
-- **identifier_crosswalk.json:** Maps source identifier types (SSN, DL, PassportNo, etc.) to Senzing identifier features
-- **usage_type_crosswalk.json:** Maps source usage types (HOME, WORK, MAILING, etc.) to Senzing usage types
+The AI guides you through the **5-stage mapping process**:
 
-These ensure consistent mapping decisions across all your mapping projects. Update them as you encounter new source type values.
+1. **Init** — Load references, verify tools
+2. **Inventory** — Extract all source fields (with anti-hallucination checks)
+3. **Planning** — Identify entities, confirm DATA_SOURCE codes
+4. **Mapping** — Classify each field: Feature / Payload / Ignore
+5. **Outputs** — Generate mapping spec and Python mapper code
 
-### Quick Start Options
+During development, the AI validates sample JSON records with the linter:
 
-#### Option A — Local IDE with AI Assistant (Recommended)
-For most mapping projects, work locally with an AI-enabled IDE:
-1. Open your project folder in your IDE (VS Code, Cursor, Windsurf, JetBrains, etc.)
-2. Fetch the RAG files into your workspace (clone this repo, download files, or fetch via raw URLs)
-3. Configure your AI assistant/agent to load the 5 RAG files as context/knowledge
-4. Set `senzing_mapping_assistant_prompt.md` as the system prompt or initial instruction
-5. Work interactively with your source schema/data files
+```bash
+python3 senzing/tools/lint_senzing_json.py sample.jsonl
+```
 
-**Why local?** Direct file access, ability to execute the linter, generate and test code, handle complex multi-file schemas, and iterate on mapper implementations.
+### 3. Run the Mapper
 
-#### Option B — Web-based AI Chat (Simple Schemas Only)
-For quick exploration or simple single-file schemas:
-1. Create a new project in a web-based AI platform:
-   - **Claude.ai:** Create a Project and add documents
-   - **ChatGPT:** Use ChatGPT web interface with file uploads
-   - **Grok:** Use Grok web interface with file uploads
-   - **Custom GPT:** Try the [Senzing Mapping Assistant GPT](https://chatgpt.com/g/g-68e7e7dd8b648191a082b4a0c2943499-senzing-mapping-assistant) (RAG files preloaded)
-2. Upload the 5 RAG files as knowledge documents
-3. Paste `senzing_mapping_assistant_prompt.md` content into your first message or system prompt
-4. Upload your source schema/data file and begin
+Execute the generated mapper to produce complete JSONL output:
 
-**Limitation:** Web interfaces can't execute the linter locally or handle complex multi-file schemas efficiently.
+```bash
+python3 mapper.py source.csv -o output.jsonl
+```
 
-## Related Resources
+### 4. Analyze Mapping Quality
 
-For a complete hands-on mapping workshop with sample data, tools, and step-by-step instructions, see the full [AI-Class repository](https://github.com/jbutcher21/aiclass).
+Before loading into Senzing, analyze the complete mapped dataset:
+
+```bash
+python3 senzing/tools/sz_json_analyzer.py output.jsonl -o analysis.md
+```
+
+This generates a comprehensive report showing:
+- ✅ Feature attributes mapped for entity resolution
+- ℹ️ Payload attributes stored but not matched
+- ⚠️ Data quality warnings (low population, low uniqueness)
+- ❌ Critical errors (unknown DATA_SOURCE values)
+
+### 5. Configure Data Sources
+
+> **Requires:** Initialized Senzing environment with `sz_configtool` available.
+
+If the analyzer reports unknown DATA_SOURCE values, configure them:
+
+```bash
+cat > project_config.g2c << 'EOF'
+addDataSource CUSTOMERS
+save
+EOF
+source ~/.bashrc && sz_configtool -f project_config.g2c
+```
+
+### 6. Load into Senzing
+
+> **Requires:** Initialized Senzing environment with `sz_file_loader` available.
+
+Load the validated JSONL into Senzing:
+
+```bash
+source ~/.bashrc && sz_file_loader -f output.jsonl
+```
+
+**Prerequisites:**
+- ✅ Linter passed (no structural errors)
+- ✅ Analyzer clean (no critical errors)
+- ✅ Data sources configured
+
+### 7. Analyze Entity Resolution Results
+
+> **Requires:** Initialized Senzing environment with `sz_snapshot` available.
+
+After loading, generate a snapshot to analyze match quality:
+
+```bash
+source ~/.bashrc && sz_snapshot -o project-snapshot-$(date +%Y-%m-%d) -Q
+```
+
+The snapshot shows:
+- Entity counts and compression ratios per data source
+- Match categories (MATCH, POSSIBLE_MATCH, POSSIBLE_RELATION)
+- Cross-source matches (e.g., customers matching watchlist entries)
+- Match keys showing how entities were resolved
+
+---
+
+## What's Included
+
+```
+senzing/
+├── prompts/
+│   └── senzing_mapping_assistant.md   # 5-stage workflow prompt
+├── reference/
+│   ├── senzing_entity_specification.md # Authoritative entity spec
+│   ├── senzing_mapping_examples.md     # Correct JSON patterns
+│   ├── identifier_crosswalk.json       # ID type mappings
+│   └── usage_type_crosswalk.json       # Usage type mappings
+├── tools/
+│   ├── sz_schema_generator.py          # Step 1: Profile source data
+│   ├── lint_senzing_json.py            # Step 2: Validate JSON structure
+│   └── sz_json_analyzer.py             # Step 4: Analyze mapping quality
+└── SENZING_TOOLS_REFERENCE.md          # Complete tool documentation
+```
+
+## Alternative Setup Methods
+
+**Local files (IDE integration):**
+Clone this repo and reference `senzing/prompts/senzing_mapping_assistant.md` in your AI assistant.
+
+**Manual upload (web platforms):**
+Upload files from `senzing/prompts/`, `senzing/reference/`, and `senzing/tools/lint_senzing_json.py` to your AI platform.
