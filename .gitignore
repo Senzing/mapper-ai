@@ -9,6 +9,7 @@
 .mypy_cache
 
 # Large test data files (exceed GitHub 100MB limit)
+tests/**
 tests/xml/sdn_advanced.xml
 tests/json/rows.json
 tests/icij/nodes-entities.csv
