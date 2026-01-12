@@ -89,7 +89,7 @@ test = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["senzing"]
 
 [tool.bandit]
 skips = ["B101"]
@@ -103,7 +103,7 @@ max-line-length = 120
 
 [tool.isort]
 profile = "black"
-src_paths = ["examples", "src", "tests"]
+src_paths = ["examples", "senzing", "tests"]
 
 [tool.pylint]
 ignored-argument-names = "args|kwargs"

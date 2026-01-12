@@ -66,6 +66,7 @@ senzing/
 ### Senzing JSON Format
 
 Records must have:
+
 - `DATA_SOURCE` (string): Source identifier
 - `RECORD_ID` (string): Unique record identifier (recommended)
 - `FEATURES` (array): List of feature objects, each containing attributes from a single feature family
@@ -75,6 +76,7 @@ Feature families include: NAME, ADDRESS, PHONE, EMAIL, DOB, PASSPORT, SSN, NATIO
 ### 5-Stage Mapping Workflow
 
 The AI mapping assistant (`senzing/prompts/senzing_mapping_assistant.md`) follows:
+
 1. **Init** — Load references, verify tools
 2. **Inventory** — Extract all source fields with integrity checks
 3. **Planning** — Identify entities, confirm DATA_SOURCE codes
