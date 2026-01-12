@@ -1,1 +1,1 @@
-# Errors
+# mapper-ai errors

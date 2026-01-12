@@ -1,5 +1,8 @@
-# template-repository
+# mapper-file
 
-Placeholder for [GitHub pages](https://pages.github.com/).
+Placeholder for [GitHub pages].
 
-See [https://senzing.github.io/template-repository](https://senzing.github.io/template-repository).
+See [GitHub page].
+
+[GitHub page]: https://hub.senzing.com/mapper-ai
+[GitHub pages]: https://pages.github.com/
