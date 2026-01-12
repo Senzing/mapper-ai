@@ -39,7 +39,7 @@ python3 senzing/tools/sz_json_analyzer.py <input.jsonl> -o <analysis>.md
 
 ### Directory Structure
 
-```
+```console
 senzing/
 ├── prompts/
 │   └── senzing_mapping_assistant.md   # 5-stage AI workflow prompt
