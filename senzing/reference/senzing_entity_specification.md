@@ -1,12 +1,10 @@
 # Senzing Entity Specification (v0.1.0 — 2025-09-22)
 
-This document defines the Senzing Entity Specification — a detailed guide for mapping source data into Senzing’s entity resolution engine.
+This document defines the Senzing Entity Specification — a detailed guide for mapping source data into Senzing's entity resolution engine.
 
-The process of mapping is taking a source field name, like CustomerName, and transforming it into a target field name, by applying specific rules, such as renaming, reformatting, or combining fields based on predefined logic or conditions. It’s like creating a bridge where data from one system is reshaped to fit the structure of another system, guided by those rules.
+The process of mapping is taking a source field name, like CustomerName, and transforming it into a target field name, by applying specific rules, such as renaming, reformatting, or combining fields based on predefined logic or conditions. It's like creating a bridge where data from one system is reshaped to fit the structure of another system, guided by those rules.
 
 # Key Terms
-
-![Diagram: Entity → Features → Attributes](images/ges-image1-key_terms.jpg "An Entity has Features; Features have Attributes")
 
 ## Entities, Features and Attributes:
 - **Entity** — A real-world subject, primarily a PERSON or an ORGANIZATION, described by one record.
@@ -14,24 +12,23 @@ The process of mapping is taking a source field name, like CustomerName, and tra
 - **Attribute** — A single field within a feature (e.g., NAME_FIRST and NAME_LAST in NAME; ADDR_LINE1 in ADDRESS).
 
 ## Usage types and payload (optional attributes)
-- **Usage Type** — A short label that distinguishes multiple instances of the same feature on one entity (e.g., HOME vs MAILING address, MOBILE vs HOME phone, PRIMARY vs ALIAS name). It helps explain “which one it is” when there are several. 
+- **Usage Type** — A short label that distinguishes multiple instances of the same feature on one entity (e.g., HOME vs MAILING address, MOBILE vs HOME phone, PRIMARY vs ALIAS name). It helps explain "which one it is" when there are several.
 - **Payload Attributes** — These are attributes that are not used for matching, but can be helpful in understanding matches or making quick decisions. (e.g., STATUS: Active|Inactive, RISK_CATEGORY, INDUSTRY_CODE)
-
 
 # What Features to Map
 
-Entity resolution works best when you have a name and as many other features as you can find. The more features on each record, the better the entity resolution! Below are feature lists to look for in your sources. Rank indicates typical importance to entity resolution. 
+Entity resolution works best when you have a name and as many other features as you can find. The more features on each record, the better the entity resolution! Below are feature lists to look for in your sources. Rank indicates typical importance to entity resolution.
 
 | Feature | Description | Importance | Guidance |
 | --- | --- | --- | --- |
 | RECORD_TYPE | (e.g., PERSON, ORGANIZATION) | High | Include when known to prevent cross‑type resolution; omit if unknown. Use standardized kinds (PERSON, ORGANIZATION). Often used to determine icon/shape in graphs. |
-| NAME (person) | Personal names | High | Look for: legal name, aliases/AKAs, maiden/former names, nickname/preferred name, transliterations/alternate scripts. Prefer parsed components when available (FIRST, MIDDLE, LAST, SUFFIX). |
+| NAME (person) | Personal names | High | Look for: legal name, aliases/AKAs, maiden/former names, nickname/preferred name, transliterations/alternate scripts. Use parsed components (FIRST, MIDDLE, LAST, SUFFIX) only when the source provides separate fields; do NOT parse a single name field—use NAME_FULL instead. |
 | NAME (organization) | Organization legal or trade name | High | Look for: legal/registered name, trade/DBA, former names, short/brand names, transliterations/alternate scripts. |
 | DOB | Person date of birth | High | Full date preferred; partial values accepted. |
 | ADDRESS (person) | Postal/physical address | High | Look for: residential/home, mailing/remittance, previous/old; prefer parsed components when available (LINE1/2, CITY, STATE/PROVINCE, POSTAL_CODE, COUNTRY). |
 | ADDRESS (organization) | Organization location address | High | Look for: physical/business/registered office, mailing/remittance; prefer parsed components when available (LINE1/2, CITY, STATE/PROVINCE, POSTAL_CODE, COUNTRY). |
 | PASSPORT | Passport identifier | High | Include issuing country. |
-| DRLIC | Driver’s license | High | Include issuing state/province/country. |
+| DRLIC | Driver's license | High | Include issuing state/province/country. |
 | SSN | US Social Security Number | High | Partial values accepted. |
 | TAX_ID | Tax identifier | High | Look for: EIN, VAT, TIN/ITIN; include issuing country. |
 | NATIONAL_ID (person) | National/person identifier | High | Look for country‑specific IDs; include issuing country. Common examples: SIN (CA), CURP (MX), NINO (UK), NIR/INSEE (FR). |
@@ -43,7 +40,7 @@ Entity resolution works best when you have a name and as many other features as 
 | LEI_NUMBER | Legal Entity Identifier | Medium | — |
 | NPI_NUMBER | US healthcare provider ID | Medium | — |
 | ACCOUNT | Account or card number | Medium | Look for bank or other account numbers that can aid resolution, especially across data sources. |
-| OTHER_ID | Other/uncategorized identifier | Medium | For identifier types that can’t be mapped to one of Senzing’s specific identifier features. Use sparingly; if an identifier is used frequently, create a dedicated feature for it. |
+| OTHER_ID | Other/uncategorized identifier | Medium | For identifier types that can't be mapped to one of Senzing's specific identifier features. Use sparingly; if an identifier is used frequently, create a dedicated feature for it. |
 | GENDER | Person gender | Low-Medium | — |
 | EMPLOYER | Name of a person's employer | Medium-Low | Can aid resolution on smaller companies; subject to generic thresholds; form of group association. |
 | GROUP_ASSOCIATION | Other organization names an entity is associated with | Medium-Low | Can aid resolution on smaller domains, subject to generic thresholds. |
@@ -54,9 +51,9 @@ Entity resolution works best when you have a name and as many other features as 
 | NATIONALITY | Person nationality | Low | — |
 | CITIZENSHIP | Person citizenship | Low | — |
 | PLACE_OF_BIRTH | Person place of birth | Low | Typically not well controlled. |
-| WEBSITE | Organization website/domain | Low | Typically shared across the organization’s hierarchy. |
+| WEBSITE | Organization website/domain | Low | Typically shared across the organization's hierarchy. |
 | REL_ANCHOR | Relationship anchor for a source record | Relationship | Optional (recommended when other records will point here); at most one per record. |
-| REL_POINTER | Pointer to another record’s anchor | Relationship | Place on source record; include REL_POINTER_ROLE (e.g., EMPLOYED_BY, PRINCIPAL_OF, OWNER_OF, SPOUSE_OF, SON_OF, FATHER_OF, BRANCH_OF, DIRECT_PARENT, ULTIMATE_PARENT). |
+| REL_POINTER | Pointer to another record's anchor | Relationship | Place on source record; include REL_POINTER_ROLE (e.g., EMPLOYED_BY, PRINCIPAL_OF, OWNER_OF, SPOUSE_OF, SON_OF, FATHER_OF, BRANCH_OF, DIRECT_PARENT, ULTIMATE_PARENT). |
 | TRUSTED_ID | Curated control identifier | Control | Forces records together or apart; like a curated ID layered over source IDs. Use cautiously per guidance. |
 
 ## Payload Attributes (Optional)
@@ -77,6 +74,9 @@ Performance note:
 - Payload increases storage and I/O. Include only when it materially improves downstream understanding. On very large systems, evaluate impact before enabling broadly.
 - If you do decide to include them, keep them minimal and only include what helps a human understand matches or an algorithm to triage them.
 - You may decide to map a few during a proof of concept while you are analyzing matches and then remove them when you go to production.
+
+Feature name collisions:
+- When a source field name matches a Senzing feature attribute name, verify the source field's meaning matches the feature's definition. If it matches → map as that feature. If it differs → rename to a materially different payload attribute name (e.g., source field "registration_date" that means account signup date should become "signup_date", not "ACCOUNT_REGISTRATION_DATE" which still contains the reserved name).
 
 # Recommended JSON Schema
 
@@ -199,39 +199,36 @@ Schema Validation Rules
   - Optional root level attributes (Payload Attributes)
     - Must not be a registered feature attribute
     - Must be a scalar object (string, number, boolean), Not an array or nested object
-  - Only registered feature attributes may appear inside feature objects. See “Registered Feature Attributes” below for the complete list and guidance.
-
+  - Only registered feature attributes may appear inside feature objects. See "Registered Feature Attributes" below for the complete list and guidance.
 
 *Note: If exporting Senzing JSON records to a file its best to flatten them to create an easy to consume JSONL file.*
 
-
 # Source Schema Types
 
-Sources vary — CSV/TSV and relational tables, JSON/JSONL, XML, Parquet, and graph exports.  
+Sources vary — CSV/TSV and relational tables, JSON/JSONL, XML, Parquet, and graph exports.
 
 ## Unified terms (applies to all sources)
 - Master entity: the master person or organization record (a master table row, a graph node, or a top‑level JSON/XML object). One master → one Senzing entity document.
 - Identifying attributes: the attributes that identify/describe the entity (names, addresses, phones, emails, identifiers, websites, etc.). These may appear on the master itself or inside child lists/structures.
-- Child lists: one‑to‑many data linked to the master. Depending on source, these appear as separate tables, JSON arrays under the master object, repeated XML elements, Parquet list<struct> columns, or graph attribute nodes. Usually each child record represents one (name, address, phone, identifier, etc.) and contains a type such as alias or dba for a name, home, mailing etc for an address, drivers license, passport, tax_id, etc for an identifier.
-- Disclosed relationships: links between source records (masters) (person↔org, person↔person, org↔org). Depending on source, these appear as link/bridge tables, foreign keys to other master IDs, JSON pointers, XML references, Parquet join keys, or graph edges. 
+- Child lists: one‑to‑many data with ONE foreign key to the master. Depending on source, these appear as separate tables, JSON arrays under the master object, repeated XML elements, Parquet list<struct> columns, or graph attribute nodes. Usually each child record represents one (name, address, phone, identifier, etc.) and contains a type such as alias or dba for a name, home, mailing etc for an address, drivers license, passport, tax_id, etc for an identifier.
+- Disclosed relationships: links between source records (masters) (person↔org, person↔person, org↔org). Depending on source, these appear as link/bridge tables, foreign keys to other master IDs, JSON pointers, XML references, Parquet join keys, or graph edges.
 
 ## Format notes (how to spot masters, children, and disclosed relationships)
 - CSV/TSV/Relational: master tables for persons/organizations; child tables for names, addresses, phones, identifiers; link tables for relationships. Join on primary/foreign keys; each child row → one feature object.
-- JSON/JSONL: master object per entity; child lists are arrays on the master (e.g., `names`, `addresses`, `phones`, `ids`). Flatten each array element into a separate feature object. Nested objects representing a single value map to a single feature; arrays map to multiple features. 
+- JSON/JSONL: master object per entity; child lists are arrays on the master (e.g., `names`, `addresses`, `phones`, `ids`). Flatten each array element into a separate feature object. Nested objects representing a single value map to a single feature; arrays map to multiple features.
 - XML: master element per entity; child lists are repeated child elements; attributes may be XML attributes or elements. Treat repeated elements like JSON arrays: one repeated element → one feature object. Extract scalar values only inside a feature.
-- Parquet: when normalized across files, treat like relational; when a single file contains list/struct columns on the master row, treat list<struct> as child lists (one struct → one feature) and struct as a single feature’s values. Join across Parquet datasets on keys where needed.
+- Parquet: when normalized across files, treat like relational; when a single file contains list/struct columns on the master row, treat list<struct> as child lists (one struct → one feature) and struct as a single feature's values. Join across Parquet datasets on keys where needed.
 - Graph: nodes representing persons or organizations are master entities; edges from a master to attribute nodes (e.g., address, phone, email, identifiers) represent features; edges between master nodes represent disclosed relationships.
 
 ## How to Map Them
 
 - Master entity: each person/org row, node, or top‑level object → one Senzing record; include `RECORD_TYPE` (PERSON/ORGANIZATION) when known.
 - Features: collect identifying attributes from the master and child lists/structures (tables, arrays/repeated elements, list<struct>, property nodes) and group them into features — `NAME_*`, `ADDR_*`, `PHONE_*`, `PASSPORT_*`, etc.
-- Disclosed relationships: map links/edges/foreign keys between source records (masters) using `REL_*` features.  
+- Disclosed relationships: map links/edges/foreign keys between source records (masters) using `REL_*` features.
 - Output: emit one JSON record per master entity with all FEATURES (attributes and disclosed relationships) included.
 - For records that reference entities without unique keys (e.g., sender and receiver on transactions), extract identifying attributes and compute a deterministic RECORD_ID as a hash of normalized values. Stamp this ID on the source record before mapping to Senzing, and track these IDs on the source side as well.
 - For records that have features that clearly do not belong to the primary entity (e.g., employer name and address on a contact list, reference name and phone number on a job application), consider creating a second entity related to the primary entity.
 - Use a stable normalization recipe (fixed fields and order; trim/collapse whitespace; case‑fold; normalize punctuation/diacritics) before hashing.
-
 
 # General mapping guidance
 
@@ -259,7 +256,7 @@ Guidance
 - Only include usage types when the source clearly provides them.
 - Special meanings that influence resolution/display:
   - NAME_TYPE PRIMARY: Used to choose the best display name when multiple names exist.
-  - ADDR_TYPE BUSINESS (organizations): Adds weight to an organization’s physical location.
+  - ADDR_TYPE BUSINESS (organizations): Adds weight to an organization's physical location.
   - PHONE_TYPE MOBILE: Adds weight to personal mobile numbers.
 
 ## Mapping Identifiers
@@ -272,7 +269,7 @@ Classification workflow (stop at first match)
 1) Specific identifier
    - SSN → SSN
    - Passport → PASSPORT + PASSPORT_COUNTRY
-   - Driver’s License → DRLIC + DRIVERS_LICENSE_STATE
+   - Driver's License → DRLIC + DRIVERS_LICENSE_STATE
    - LEI → LEI_NUMBER
    - DUNS → DUNS_NUMBER
    - NPI → NPI_NUMBER
@@ -291,13 +288,13 @@ Classification workflow (stop at first match)
 
 5) Everything else (last resort)
    - Only if it is truly an identifier and not covered above: OTHER_ID + OTHER_ID_TYPE [+ OTHER_ID_COUNTRY when relevant].
-   - Do not default to OTHER_ID without research (see “dumping-ground” warning below).
+   - Do not default to OTHER_ID without research (see "dumping-ground" warning below).
 
 Required context
-- Always include issuer to scope uniqueness (e.g., PASSPORT_COUNTRY, DRIVERS_LICENSE_STATE, TAX_ID_COUNTRY). See “Identifiers → Principles” for uniqueness and issuer guidance.
+- Always include issuer to scope uniqueness (e.g., PASSPORT_COUNTRY, DRIVERS_LICENSE_STATE, TAX_ID_COUNTRY). See "Identifiers → Principles" for uniqueness and issuer guidance.
 
-Beware “dumping‑ground” identifier tables
-- Some sources use code-driven “identifier” tables for anything lacking a dedicated field. You may encounter document dates (e.g., birth-certificate dates), risk categories/statuses, or free-text notes. Do not map these as identifiers (including OTHER_ID). Route to a registered feature when appropriate; otherwise use payload attributes or omit when no meaningful, spec-compliant placement exists.
+Beware "dumping‑ground" identifier tables
+- Some sources use code-driven "identifier" tables for anything lacking a dedicated field. You may encounter document dates (e.g., birth-certificate dates), risk categories/statuses, or free-text notes. Do not map these as identifiers (including OTHER_ID). Route to a registered feature when appropriate; otherwise use payload attributes or omit when no meaningful, spec-compliant placement exists.
 
 Common identifier mappings reference
 
@@ -338,9 +335,6 @@ Notes
 
 # Disclosed Relationship Mapping Guidance
 
-Diagram
-![Relationship mapping: anchor and pointers](images/ges-image3-relationship.png)
-
 What it is
 - Disclosed relationships connect source records (masters), not features.
 - Common pairs and examples:
@@ -358,12 +352,12 @@ Direction and roles (how to assign anchor vs pointer)
   - OWNER_OF: Person → Organization (person has REL_POINTER; organization has REL_ANCHOR)
   - DIRECT_PARENT: Parent org → Child org (parent has REL_POINTER; child has REL_ANCHOR)
   - ULTIMATE_PARENT: Top-level parent → Subsidiary (top-level has REL_POINTER; subsidiary has REL_ANCHOR)
-  - SPOUSE_OF: Often symmetric; emitting a single direction is acceptable if that’s what your source provides.
+  - SPOUSE_OF: Often symmetric; emitting a single direction is acceptable if that's what your source provides.
   - SON_OF / FATHER_OF (directional verbs): Follow the verb — SON_OF means child → parent; FATHER_OF means parent → child.
 
 Anchors: avoid second passes
 - Place at most one `REL_ANCHOR` on any record that could be a target of relationships.
-- It’s safe and recommended to add `REL_ANCHOR` proactively (even if pointers aren’t known yet) so no second pass is required.
+- It's safe and recommended to add `REL_ANCHOR` proactively (even if pointers aren't known yet) so no second pass is required.
 
 Model (anchor ↔ pointer)
 - Anchor (target): add one `REL_ANCHOR` feature object; never more than one per record.
@@ -387,70 +381,6 @@ Cardinality and integrity
 - One anchor per record (max). Zero or more pointers per record.
 - One relationship → one `REL_POINTER` object (multiple relationships → multiple objects).
 - Validate that every `REL_POINTER (DOMAIN, KEY)` resolves to a record that has (or will have) a matching `REL_ANCHOR`.
-
-Examples
-- EMPLOYED_BY (Person → Organization)
-```json
-{
-  "DATA_SOURCE": "CUSTOMERS",
-  "RECORD_ID": "P1001",
-  "FEATURES": [
-    { "REL_POINTER_DOMAIN": "CUSTOMERS", "REL_POINTER_KEY": "ORG1001", "REL_POINTER_ROLE": "EMPLOYED_BY" }
-  ]
-}
-```
-```json
-{
-  "DATA_SOURCE": "CUSTOMERS",
-  "RECORD_ID": "ORG1001",
-  "FEATURES": [
-    { "REL_ANCHOR_DOMAIN": "CUSTOMERS", "REL_ANCHOR_KEY": "ORG1001" }
-  ]
-}
-```
-
-- BRANCH_OF (Branch Org → Parent Org)
-```json
-{
-  "DATA_SOURCE": "CUSTOMERS",
-  "RECORD_ID": "ORG2001",
-  "FEATURES": [
-    { "REL_POINTER_DOMAIN": "CUSTOMERS", "REL_POINTER_KEY": "ORG1001", "REL_POINTER_ROLE": "BRANCH_OF" }
-  ]
-}
-```
-```json
-{
-  "DATA_SOURCE": "CUSTOMERS",
-  "RECORD_ID": "ORG1001",
-  "FEATURES": [
-    { "REL_ANCHOR_DOMAIN": "CUSTOMERS", "REL_ANCHOR_KEY": "ORG1001" }
-  ]
-}
-```
-
-- SON_OF / FATHER_OF (reciprocal pointers when provided)
-```json
-{
-  "DATA_SOURCE": "CUSTOMERS",
-  "RECORD_ID": "PER1001",
-  "FEATURES": [
-    { "REL_ANCHOR_DOMAIN": "CUSTOMERS", "REL_ANCHOR_KEY": "PER1001" },
-    { "REL_POINTER_DOMAIN": "CUSTOMERS", "REL_POINTER_KEY": "PER1002", "REL_POINTER_ROLE": "SON_OF" }
-  ]
-}
-```
-```json
-{
-  "DATA_SOURCE": "CUSTOMERS",
-  "RECORD_ID": "PER1002",
-  "FEATURES": [
-    { "REL_ANCHOR_DOMAIN": "CUSTOMERS", "REL_ANCHOR_KEY": "PER1002" },
-    { "REL_POINTER_DOMAIN": "CUSTOMERS", "REL_POINTER_KEY": "PER1001", "REL_POINTER_ROLE": "FATHER_OF" }
-  ]
-}
-```
-Note: Each target record should also carry a single `REL_ANCHOR` (see pattern above).
 
 See also
 - Full field definitions and examples: Feature: `REL_ANCHOR` and Feature: `REL_POINTER` later in this spec.
@@ -496,7 +426,6 @@ Tips for adding RECORD_TYPEs
 - Many watchlists have standardized on values such as VESSEL and AIRCRAFT. You do not need to register these in Senzing to use them as RECORD_TYPE.
 - If you add such types, also include their appropriate identifiers as FEATURES so matching remains effective (e.g., `IMO_NUMBER`, `CALL_SIGN` for vessels; `AIRCRAFT_TAIL_NUMBER` for aircraft).
 
-
 ## Feature: NAME
 Importance: High
 
@@ -512,7 +441,7 @@ Importance: High
 | NAME_FULL    | Robert J Smith, Trust   | Single-field name when type (person vs org) is unknown or only a full name is provided. |
 
 Rules
-- Prefer parsed person names (NAME_FIRST/NAME_LAST/...) when available; use NAME_ORG for organizations; use NAME_FULL only when the type is unknown or only a single field exists.
+- Use parsed person names (NAME_FIRST/NAME_LAST/...) only when the source provides separate fields; do NOT attempt to parse a single name field—use NAME_FULL for single-field names (even if they appear parseable, like "Smith, Robert"). Use NAME_ORG for organizations.
 - Keep each NAME feature object internally consistent: do not mix NAME_FULL with parsed name fields in the same object; do not mix NAME_ORG with parsed person fields in the same object.
 - Use NAME_TYPE only when provided by the source (e.g., PRIMARY, AKA, DBA).
 - When multiple names exist, NAME_TYPE=PRIMARY is special: it determines the best display name for the resolved entity (prefer PRIMARY over AKA).
@@ -539,23 +468,6 @@ Examples
 {
   "FEATURES": [
     { "NAME_FULL": "Robert J Smith, Trust" }
-  ]
-}
-```
-- ❌ Incorrect (split across multiple NAME objects)
-```json
-{
-  "FEATURES": [
-    { "NAME_LAST": "Smith" },
-    { "NAME_FIRST": "Robert" }
-  ]
-}
-```
-- ❌ Incorrect (mixing NAME_ORG with parsed person fields)
-```json
-{
-  "FEATURES": [
-    { "NAME_ORG": "Acme Tire Inc.", "NAME_FIRST": "Robert" }
   ]
 }
 ```
@@ -601,14 +513,6 @@ Examples
   ]
 }
 ```
-- ❌ Incorrect (mixing ADDR_FULL with parsed fields)
-```json
-{
-  "FEATURES": [
-    { "ADDR_FULL": "123 Main St, Las Vegas, NV 89132", "ADDR_CITY": "Las Vegas" }
-  ]
-}
-```
 
 ## Feature: PHONE
 Importance: Medium
@@ -634,132 +538,28 @@ Examples
 }
 ```
 
-## Physical and other attributes
+## Simple Scalar Attributes
 
-### Feature: GENDER
-Importance: Low-Medium
+These single-value attributes follow the same pattern: `{ "ATTRIBUTE": "value" }`.
 
-| Attribute | Example | Guidance |
-| ---       | ---     | --- |
-| GENDER    | M       | Gender code or label from the source. For matching, only M, F, Male, and Female are considered; other values are ignored to avoid denials (e.g., M vs UNK). |
-
-Example
-```json
-{
-  "FEATURES": [
-    { "GENDER": "F" }
-  ]
-}
-```
-
-### Feature: DOB (Date of Birth)
-Importance: High
-
-| Attribute       | Example     | Guidance |
-| ---             | ---         | --- |
-| DATE_OF_BIRTH   | 1980-05-14  | Complete dates preferred; partial dates accepted when only partial is available (e.g., YYYY‑MM or MM‑DD). |
-
-Examples
-```json
-{
-  "FEATURES": [
-    { "DATE_OF_BIRTH": "1980-05-14" }
-  ]
-}
-```
-
-### Feature: DOD (Date of Death)
-Importance: Low-Medium
-
-| Attribute       | Example     | Guidance |
-| ---             | ---         | --- |
-| DATE_OF_DEATH   | 2010-05-14  | Complete dates preferred; partial dates accepted when only partial is available (e.g., YYYY‑MM or MM‑DD). |
+| Attribute | Importance | Example | Guidance |
+| --- | --- | --- | --- |
+| DATE_OF_BIRTH | High | 1980-05-14 | Complete dates preferred; partial dates accepted (YYYY-MM or MM-DD). |
+| GENDER | Low-Medium | M | Only M, F, Male, Female are matched; other values ignored. |
+| DATE_OF_DEATH | Low-Medium | 2010-05-14 | Complete dates preferred; partial dates accepted. |
+| NATIONALITY | Low | US | Country of nationality (code or label). |
+| CITIZENSHIP | Low | US | Country of citizenship (code or label). |
+| PLACE_OF_BIRTH | Low | Chicago | City/region or country code/label. |
+| REGISTRATION_DATE | Low-Medium | 2010-05-14 | Organization registration date. Complete dates preferred. |
+| REGISTRATION_COUNTRY | Low | US | Organization country of registration (code or label). |
 
 Example
 ```json
 {
   "FEATURES": [
-    { "DATE_OF_DEATH": "2010-05-14" }
-  ]
-}
-```
-
-### Feature: NATIONALITY
-Importance: Low
-
-| Attribute   | Example | Guidance |
-| ---         | ---     | --- |
-| NATIONALITY | US      | Country of nationality (code or label) as provided by the source. |
-
-Example
-```json
-{
-  "FEATURES": [
+    { "DATE_OF_BIRTH": "1980-05-14" },
+    { "GENDER": "F" },
     { "NATIONALITY": "US" }
-  ]
-}
-```
-
-### Feature: CITIZENSHIP
-Importance: Low
-
-| Attribute   | Example | Guidance |
-| ---         | ---     | --- |
-| CITIZENSHIP | US      | Country of citizenship (code or label) as provided by the source. |
-
-Example
-```json
-{
-  "FEATURES": [
-    { "CITIZENSHIP": "US" }
-  ]
-}
-```
-
-### Feature: POB (Place of Birth)
-Importance: Low
-
-| Attribute        | Example   | Guidance |
-| ---              | ---       | --- |
-| PLACE_OF_BIRTH   | Chicago   | Place of birth; may be a city/region or a country code/label as provided by the source. |
-
-Example
-```json
-{
-  "FEATURES": [
-    { "PLACE_OF_BIRTH": "Chicago, IL" }
-  ]
-}
-```
-
-### Feature: REGISTRATION_DATE (Organizations)
-Importance: Low-Medium
-
-| Attribute          | Example     | Guidance |
-| ---                | ---         | --- |
-| REGISTRATION_DATE  | 2010-05-14  | Organization registration/incorporation date. Complete dates preferred; partial dates accepted when only partial is available (e.g., YYYY‑MM or MM‑DD). |
-
-Example
-```json
-{
-  "FEATURES": [
-    { "REGISTRATION_DATE": "2010-05-14" }
-  ]
-}
-```
-
-### Feature: REGISTRATION_COUNTRY (Organizations)
-Importance: Low
-
-| Attribute             | Example | Guidance |
-| ---                   | ---     | --- |
-| REGISTRATION_COUNTRY  | US      | Country of registration (code or label) as provided by the source. |
-
-Example
-```json
-{
-  "FEATURES": [
-    { "REGISTRATION_COUNTRY": "US" }
   ]
 }
 ```
@@ -783,12 +583,12 @@ Example
 }
 ```
 
-### Feature: DRLIC (Driver’s License)
+### Feature: DRLIC (Driver's License)
 Importance: High
 
 | Attribute               | Example | Guidance |
 | ---                     | ---     | --- |
-| DRIVERS_LICENSE_NUMBER  | 112233  | Driver’s license number. |
+| DRIVERS_LICENSE_NUMBER  | 112233  | Driver's license number. |
 | DRIVERS_LICENSE_STATE   | NV      | Issuing state/province/country. Strongly recommended. |
 
 Example
@@ -886,7 +686,7 @@ Importance: Medium
 | OTHER_ID_COUNTRY  | MX       | Optional as country often not known or issued by an organization |
 
 - Use OTHER_ID sparingly; Prefer adding a specific feature for frequently used non‑country identifiers so matching behavior can be adjusted.
-- Do NOT use OTHER_ID for values that are not unique to an entity within the domain.  
+- Do NOT use OTHER_ID for values that are not unique to an entity within the domain.
 
 Good/Bad
 - ✅ Good
@@ -979,38 +779,12 @@ Example
 }
 ```
 
-## Feature: EMAIL
-Importance: Medium
+## Features: EMAIL and WEBSITE
 
-| Attribute      | Example                | Guidance |
-| ---            | ---                    | --- |
-| EMAIL_ADDRESS  | someone@somewhere.com  | Email address. |
-
-
-Example
-```json
-{
-  "FEATURES": [
-    { "EMAIL_ADDRESS": "alex@example.com" }
-  ]
-}
-```
-
-## Feature: WEBSITE
-Importance: Low
-
-| Attribute        | Example          | Guidance |
-| ---              | ---              | --- |
-| WEBSITE_ADDRESS  | somecompany.com  | Website or domain; typically for organizations. |
-
-Example
-```json
-{
-  "FEATURES": [
-    { "WEBSITE_ADDRESS": "acmetire.com" }
-  ]
-}
-```
+| Attribute | Importance | Example | Guidance |
+| --- | --- | --- | --- |
+| EMAIL_ADDRESS | Medium | alex@example.com | Email address. |
+| WEBSITE_ADDRESS | Low | acmetire.com | Website or domain; typically for organizations. |
 
 ## Features for Social Media Handles
 Importance: Medium
@@ -1036,7 +810,7 @@ Rules
 - Normalize values: store the canonical handle/ID, not a full URL. Strip `http(s)://`, `www.`, trailing slashes, query params, and a leading `@`.
 - One handle per object: add one FEATURES object per platform handle; do not concatenate multiple handles.
 - Prefer handle/ID over URL: if only a profile URL is provided, extract the handle/ID.
-- Don’t use content links: skip post/status URLs; only capture profile-level handles/IDs.
+- Don't use content links: skip post/status URLs; only capture profile-level handles/IDs.
 - Case handling: store handles lowercased for case‑insensitive platforms; preserve exact case if a platform is case‑sensitive.
 - Phone‑based apps: when a handle is a phone number (e.g., WhatsApp, Signal, Viber), also map the number to PHONE in addition to the app‑specific feature.
 - Persons vs organizations: map personal handles on person records and brand handles on organization records when known; avoid crossing them.
@@ -1060,13 +834,13 @@ Example
 
 ## Group Associations
 
-See ‘Mapping Group Associations (small groups only)’ for guidance and examples.
+See 'Mapping Group Associations (small groups only)' for guidance and examples.
 
 ### Feature: EMPLOYER
 Importance: Low-Medium
 
 | Attribute | Example | Guidance |
-| --- | --- | --- | 
+| --- | --- | --- |
 | EMPLOYER | ABC Company | This is the name of the organization the person is employed by. |
 
 Rules
@@ -1085,7 +859,7 @@ Example
 Importance: Low-Medium
 
 | Attribute | Example | Guidance |
-| --- | --- | --- | 
+| --- | --- | --- |
 | GROUP_ASSOCIATION_TYPE | OWNER_EXEC | Specific group/role within the organization; use precise categories (e.g., OWNER_EXEC, BOARD_MEMBER) to improve resolution. |
 | GROUP_ASSOCIATION_ORG_NAME | Group name | Name of the associated organization; use the official or standardized name. |
 
@@ -1109,7 +883,7 @@ Example
 Importance: Low-Medium
 
 | Attribute | Example | Guidance |
-| --- | --- | --- | 
+| --- | --- | --- |
 | GROUP_ASSN_ID_TYPE | COMPANY_ID | The type of group identifier an entity is associated with. |
 | GROUP_ASSN_ID_NUMBER | 12345 | The identifier the entity is associated with. If the group has a registered identifier, place it here. |
 
@@ -1133,8 +907,8 @@ See Disclosed Relationship Mapping Guidance above for model, direction, cardinal
 Category: Relationship
 
 | Attribute | Example | Guidance |
-| --- | --- | --- | 
-| REL_ANCHOR_DOMAIN | CUSTOMERS | This code helps keep the REL_ANCHOR_KEY unique.  This is a code (without dashes) for the data source or source field that is contributing the relationship.  
+| --- | --- | --- |
+| REL_ANCHOR_DOMAIN | CUSTOMERS | This code helps keep the REL_ANCHOR_KEY unique.  This is a code (without dashes) for the data source or source field that is contributing the relationship.
 | REL_ANCHOR_KEY | 1001 | This key should be a unique value for the record within the REL_ANCHOR_DOMAIN.  You can just use the current record's RECORD_ID here.|
 
 Rules
@@ -1166,14 +940,14 @@ Examples
 Category: Relationship
 
 | Attribute | Example | Guidance |
-| --- | --- | --- | 
+| --- | --- | --- |
 | REL_POINTER_DOMAIN | CUSTOMERS | See REL_ANCHOR_DOMAIN above. |
 | REL_POINTER_KEY | 1001 | See REL_ANCHOR_KEY above.
 | REL_POINTER_ROLE | SPOUSE | This is the role the pointer record has to the anchor record. Such as SPOUSE_OF, SON_OF, FATHER_OF, EMPLOYED_BY, PRINCIPAL_OF, OWNER_OF, BRANCH_OF, DIRECT_PARENT, ULTIMATE_PARENT. Standardize these role codes for display and filtering. |
 
 Rules
 - Place REL_POINTER on the source record for each disclosed relationship to a target record.
-- Provide `REL_POINTER_DOMAIN` and `REL_POINTER_KEY` to point to the target’s REL_ANCHOR; include a clear `REL_POINTER_ROLE`.
+- Provide `REL_POINTER_DOMAIN` and `REL_POINTER_KEY` to point to the target's REL_ANCHOR; include a clear `REL_POINTER_ROLE`.
 - Represent multiple relationships by adding multiple REL_POINTER objects in FEATURES (one per relationship).
 - Do not mix REL_POINTER and REL_ANCHOR attributes in the same feature object.
 
@@ -1200,7 +974,7 @@ Category: Control
 
 Two records with the same TRUSTED_ID type and number will absolutely force records together even if all their other features are different.  Conversely, two records with a different TRUSTED_ID number of the same type will be forced apart even if all their other features are the same.
 
-This feature can be used by data stewards to manually force records together or apart.  It can also be used for a source system identifier that is so trusted you want it to never be overruled by Senzing.  
+This feature can be used by data stewards to manually force records together or apart.  It can also be used for a source system identifier that is so trusted you want it to never be overruled by Senzing.
 
 | Attribute | Example | Guidance |
 | --- | --- | --- |
@@ -1224,10 +998,10 @@ Email support@senzing.com for assistance with custom features.
 
 ## How to add a data source
 
-In your Senzing project's bin directory is an application called sz_configtool. Adding a new data source is as simple as registering the code you want to use for it. 
+In your Senzing project's bin directory is an application called sz_configtool. Adding a new data source is as simple as registering the code you want to use for it.
 
 ```console
-sz_configtool.py  
+sz_configtool.py
 
 Welcome to the Senzing configuration tool! Type help or ? to list commands
 

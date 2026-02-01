@@ -14,11 +14,103 @@ This document provides concise command-line reference for Senzing tools used in 
 - `sz_file_loader` - Load data into Senzing
 - `sz_snapshot` - Export entity resolution statistics
 
-**Environment Requirement:**
-Senzing core tools require environment variables from `~/.bashrc`. When running via Bash tool, always use:
-```bash
-source ~/.bashrc && <senzing_tool> <args>
+---
+
+## Environment Configuration
+
+Senzing core tools can run in three environments. You **MUST** create a `senzing_server.json` file in your project root before running any Senzing core tools. This file is **REQUIRED** - tools cannot run without it.
+
+### Configuration File Format
+
+```json
+{
+  "mode": "local",
+  "senzingEnv": "/path/to/senzing/project/setupEnv",
+  "docker_container": "senzing-tools",
+  "docker_data_dir": "/data",
+  "ssh_host": "user@remote-server",
+  "ssh_data_dir": "/home/senzing/data"
+}
 ```
+
+### Configuration Attributes
+
+| Attribute | Required For | Description |
+|-----------|--------------|-------------|
+| `mode` | All | Environment type: `local`, `docker`, or `remote` |
+| `senzingEnv` | local, remote | Path to Senzing environment initialization script (e.g., setupEnv) |
+| `docker_container` | docker | Name of the Docker container running Senzing |
+| `docker_data_dir` | docker | Path inside container where data files are accessible |
+| `ssh_host` | remote | SSH connection string (user@host) |
+| `ssh_data_dir` | remote | Path on remote server where data files should be placed |
+
+### Environment Modes
+
+**Local** - Senzing installed directly on the machine:
+```json
+{
+  "mode": "local",
+  "senzingEnv": "/home/user/senzing/project/setupEnv"
+}
+```
+Commands use: `source <senzingEnv> && <command>`
+
+**Docker** - Senzing running in a Docker container:
+```json
+{
+  "mode": "docker",
+  "docker_container": "senzing-tools",
+  "docker_data_dir": "/data"
+}
+```
+Commands use: `docker exec <container> <command>`
+Note: Docker containers have the Senzing environment already initialized.
+
+**Remote (SSH)** - Senzing installed on a remote server:
+```json
+{
+  "mode": "remote",
+  "ssh_host": "senzing@192.168.1.100",
+  "ssh_data_dir": "/home/senzing/data",
+  "senzingEnv": "/home/senzing/project/setupEnv"
+}
+```
+Commands use: `ssh <host> "source <senzingEnv> && <command>"`
+
+### File Access (Docker and Remote)
+
+**Docker - Detecting Volume Mounts:**
+
+Before copying files, check if the project directory is already mounted:
+
+1. **Verify with `ls`:** Run `docker exec <container> ls <docker_data_dir>`
+   - If you see your project files, the directory is volume-mounted
+   - If empty or "No such file", files must be copied
+
+2. **Check the path mapping:** If `docker_data_dir` is `/project` and your local project files appear there, no copying needed
+
+**Docker - File Access Rules:**
+- **Volume mounted:** Files created locally are immediately accessible in container at `docker_data_dir` path
+- **NOT mounted:** Must copy files before each command:
+  docker cp local_file.jsonl <container>:<docker_data_dir>/local_file.jsonl
+
+**Remote (SSH):**
+- Files must always be transferred via `scp` before use:
+  scp output.jsonl senzing@host:/home/senzing/data/
+
+---
+
+## Pre-flight Check for Senzing Core Tools
+
+**BEFORE running any Senzing core tool (sz_configtool, sz_file_loader, sz_snapshot):**
+
+1. **Read `senzing_server.json`** in the project root directory
+   - If file does not exist → **STOP** and ask user to create it
+2. **Identify the `mode`** value: `local`, `docker`, or `remote`
+3. **For local/remote:** Verify `senzingEnv` path is specified
+4. **Use the matching command pattern** from the tool's documentation
+
+> ⚠️ **This config file is REQUIRED.** Tools cannot run without it. DO NOT skip this step.
 
 ---
 
@@ -29,9 +121,7 @@ source ~/.bashrc && <senzing_tool> <args>
 **When to run:** Before mapping, to understand source data structure.
 
 **AI Command:**
-```bash
 python3 senzing/tools/sz_schema_generator.py <input_file> -o <source_filename>_schema.md
-```
 
 **Reading output:**
 - Markdown file with field statistics table
@@ -40,9 +130,7 @@ python3 senzing/tools/sz_schema_generator.py <input_file> -o <source_filename>_s
 - Success indicator: Exit code 0 and message "markdown schema saved to <filename>"
 
 **Example:**
-```bash
 python3 senzing/tools/sz_schema_generator.py customers.csv -o customers_schema.md
-```
 
 ---
 
@@ -53,9 +141,7 @@ python3 senzing/tools/sz_schema_generator.py customers.csv -o customers_schema.m
 **When to run:** During mapping development as a self-test on sample JSON records created by AI. Used to verify JSON structure is correct before writing the full mapper code.
 
 **AI Command:**
-```bash
 python3 senzing/tools/lint_senzing_json.py <file.jsonl>
-```
 
 **Reading output:**
 - Exit code 0 = validation passed, ready to proceed
@@ -81,9 +167,7 @@ python3 senzing/tools/lint_senzing_json.py <file.jsonl>
 **When to run:** After mapper code generates the complete JSONL output file, before loading. This is the critical pre-load check that provides comprehensive analysis of the entire mapped dataset.
 
 **AI Command:**
-```bash
 python3 senzing/tools/sz_json_analyzer.py <input.jsonl> -o <analysis>.md
-```
 
 **IMPORTANT:** Always use `.md` extension for AI-friendly structured format.
 
@@ -137,21 +221,32 @@ NEXT STEPS:
 
 ## sz_configtool
 
+> **Environment Check:** Read `senzing_server.json` first. This file is REQUIRED. See [Pre-flight Check](#pre-flight-check-for-senzing-core-tools).
+
 **Purpose:** Configure Senzing data sources (required before loading data).
 
 **When to run:** After analyzer shows "DATA_SOURCE not found" error, before loading.
 
-**AI Command:**
-```bash
-# Create config file
+**AI Command (by environment):**
+
+First, create the config file locally:
 cat > <project>_config.g2c << 'EOF'
 addDataSource <DATA_SOURCE_NAME>
 save
 EOF
 
-# Apply configuration
-source ~/.bashrc && sz_configtool -f <project>_config.g2c
-```
+Then apply configuration based on environment:
+
+**Local:**
+source <senzingEnv> && sz_configtool -f <project>_config.g2c
+
+**Docker:** *(See [File Access](#file-access-docker-and-remote) for volume mount check)*
+docker cp <project>_config.g2c <container>:<docker_data_dir>/<project>_config.g2c
+docker exec <container> sz_configtool -f <docker_data_dir>/<project>_config.g2c
+
+**Remote (SSH):**
+scp <project>_config.g2c <ssh_host>:<ssh_data_dir>/<project>_config.g2c
+ssh <ssh_host> "source <senzingEnv> && sz_configtool -f <ssh_data_dir>/<project>_config.g2c"
 
 **Reading output:**
 - Success: Shows "Configuration saved"
@@ -161,27 +256,35 @@ source ~/.bashrc && sz_configtool -f <project>_config.g2c
 **What to tell user:**
 "Added DATA_SOURCE '<NAME>' to Senzing configuration. Ready to load data with sz_file_loader."
 
-**Example:**
-```bash
+**Example (local):**
 cat > customers_config.g2c << 'EOF'
 addDataSource CUSTOMERS
 save
 EOF
-source ~/.bashrc && sz_configtool -f customers_config.g2c
-```
+source /home/user/senzing/project/setupEnv && sz_configtool -f customers_config.g2c
 
 ---
 
 ## sz_file_loader
 
+> **Environment Check:** Read `senzing_server.json` first. This file is REQUIRED. See [Pre-flight Check](#pre-flight-check-for-senzing-core-tools).
+
 **Purpose:** Load validated Senzing JSONL into the entity resolution engine.
 
 **When to run:** After linting passes, analyzer shows no critical errors, and all DATA_SOURCE values are configured.
 
-**AI Command:**
-```bash
-source ~/.bashrc && sz_file_loader -f <file.jsonl>
-```
+**AI Command (by environment):**
+
+**Local:**
+source <senzingEnv> && sz_file_loader -f <file.jsonl>
+
+**Docker:** *(See [File Access](#file-access-docker-and-remote) for volume mount check)*
+docker cp <file.jsonl> <container>:<docker_data_dir>/<file.jsonl>
+docker exec <container> sz_file_loader -f <docker_data_dir>/<file.jsonl>
+
+**Remote (SSH):**
+scp <file.jsonl> <ssh_host>:<ssh_data_dir>/<file.jsonl>
+ssh <ssh_host> "source <senzingEnv> && sz_file_loader -f <ssh_data_dir>/<file.jsonl>"
 
 **Reading output:**
 - Exit code 0 = load successful
@@ -214,16 +317,26 @@ Next step: Run sz_snapshot to analyze entity resolution results
 
 ## sz_snapshot
 
+> **Environment Check:** Read `senzing_server.json` first. This file is REQUIRED. See [Pre-flight Check](#pre-flight-check-for-senzing-core-tools).
+
 **Purpose:** Analyze entity resolution results and export match statistics.
 
 **When to run:** After loading data with sz_file_loader, to understand match quality and entity distribution.
 
-**AI Command:**
-```bash
-source ~/.bashrc && sz_snapshot -o <project>-snapshot-$(date +%Y-%m-%d) -Q
-```
+**AI Command (by environment):**
 
-**Note:** `-Q` flag prevents interactive prompts (recommended for automation).
+**Local:**
+source <senzingEnv> && sz_snapshot -o <project>-snapshot-$(date +%Y-%m-%d) -Q
+
+**Docker:** *(See [File Access](#file-access-docker-and-remote) for volume mount check)*
+docker exec <container> sz_snapshot -o <docker_data_dir>/<project>-snapshot-$(date +%Y-%m-%d) -Q
+docker cp <container>:<docker_data_dir>/<project>-snapshot-*.json ./
+
+**Remote (SSH):**
+ssh <ssh_host> "source <senzingEnv> && sz_snapshot -o <ssh_data_dir>/<project>-snapshot-$(date +%Y-%m-%d) -Q"
+scp <ssh_host>:<ssh_data_dir>/<project>-snapshot-*.json ./
+
+**Note:** `-Q` flag prevents interactive prompts (recommended for automation). For Docker/Remote, output files must be copied back to local machine for analysis.
 
 **Reading output:**
 - Creates JSON file with entity resolution statistics
@@ -282,37 +395,40 @@ Which would you like to explore, or something else?
 
 **Complete data mapping and loading process:**
 
-```bash
-# 1. Analyze source data
-python3 senzing/tools/sz_schema_generator.py source.csv -o source_schema.md
+> **Note:** Steps 1-4 run locally (development tools). Steps 5-7 use Senzing core tools and REQUIRE `senzing_server.json` to be configured. See [Environment Configuration](#environment-configuration).
 
-# 2. Develop mapper (AI-assisted)
-#    - AI creates sample JSON records
-#    - AI runs linter on samples to validate structure
-#    - AI generates mapper code once samples pass linting
+1. Analyze source data
+   python3 senzing/tools/sz_schema_generator.py source.csv -o source_schema.md
 
-# 3. Run mapper to generate complete output
-python3 mapper.py source.csv output.jsonl
+2. Develop mapper (AI-assisted)
+   - AI creates sample JSON records
+   - AI runs linter on samples to validate structure
+   - AI generates mapper code once samples pass linting
 
-# 4. Analyze mapping quality on complete dataset
-python3 senzing/tools/sz_json_analyzer.py output.jsonl -o analysis.md
-# Read analysis.md and provide summary to user
+3. Run mapper to generate complete output
+   python3 mapper.py source.csv output.jsonl
 
-# 5. Configure data sources (if needed)
-cat > project_config.g2c << 'EOF'
-addDataSource DATASOURCE_NAME
-save
-EOF
-source ~/.bashrc && sz_configtool -f project_config.g2c
+4. Analyze mapping quality on complete dataset
+   python3 senzing/tools/sz_json_analyzer.py output.jsonl -o analysis.md
 
-# 6. Load data
-source ~/.bashrc && sz_file_loader -f output.jsonl
-# Provide load summary to user
+4.5. **ENVIRONMENT CHECK** (REQUIRED before steps 5-7)
+   Read `senzing_server.json` in project root. If missing → STOP and create it.
+   Use the command pattern matching your environment (local/docker/remote).
 
-# 7. Analyze results
-source ~/.bashrc && sz_snapshot -o project-snapshot-$(date +%Y-%m-%d) -Q
-# Provide snapshot analysis summary to user
-```
+5. Configure data sources (if needed) - use environment-specific commands
+   Local:  source <senzingEnv> && sz_configtool -f project_config.g2c
+   Docker: docker cp + docker exec
+   Remote: scp + ssh with source <senzingEnv>
+
+6. Load data - use environment-specific commands
+   Local:  source <senzingEnv> && sz_file_loader -f output.jsonl
+   Docker: docker cp + docker exec
+   Remote: scp + ssh with source <senzingEnv>
+
+7. Analyze results - use environment-specific commands
+   Local:  source <senzingEnv> && sz_snapshot -o project-snapshot-$(date +%Y-%m-%d) -Q
+   Docker: docker exec + docker cp (to retrieve output)
+   Remote: ssh with source <senzingEnv> + scp (to retrieve output)
 
 ---
 
@@ -320,11 +436,23 @@ source ~/.bashrc && sz_snapshot -o project-snapshot-$(date +%Y-%m-%d) -Q
 
 | Issue | Solution |
 |-------|----------|
+| `senzing_server.json` not found | Create config file in project root - this is REQUIRED |
+| `senzingEnv` path invalid | Verify the setupEnv file exists at the specified path |
 | "DATA_SOURCE not found" in analyzer | Run sz_configtool to add data source |
 | Linter reports format errors | Fix JSON structure (features in array, not at root) |
 | sz_file_loader fails | Check: passed linting? analyzer clean? data sources configured? |
 | Empty snapshot file | Load data first with sz_file_loader |
-| SENZING_ROOT not set | Use `source ~/.bashrc && <command>` pattern |
+| Docker container not found | Verify container name in `senzing_server.json` matches running container |
+| SSH connection refused | Verify `ssh_host` in `senzing_server.json` and SSH key access |
+| File not found (Docker/Remote) | Ensure files are copied to `docker_data_dir` or `ssh_data_dir` before running commands |
+
+---
+
+## AI Integration
+
+For AI assistants with MCP (Model Context Protocol) support, the **Senzing MCP Server** provides interactive access to entity resolution results after data is loaded.
+
+See [senzing_mcp_reference.md](senzing_mcp_reference.md) for tools and response formatting.
 
 ---
 
