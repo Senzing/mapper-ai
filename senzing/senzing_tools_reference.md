@@ -452,7 +452,7 @@ Which would you like to explore, or something else?
 
 For AI assistants with MCP (Model Context Protocol) support, the **Senzing MCP Server** provides interactive access to entity resolution results after data is loaded.
 
-See [senzing_mcp_reference.md](senzing_mcp_reference.md) for tools and response formatting.
+See the [Senzing MCP Server](https://github.com/jbutcher21/senzing-mcp-server) repo for tools and response formatting.
 
 ---
 

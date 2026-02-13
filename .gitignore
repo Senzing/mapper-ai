@@ -18,3 +18,6 @@ tests/icij/icij_mapped.jsonl
 tests/icij/nodes-addresses.csv
 tests/icij/full-oldb.LATEST.zip
 tests/icij/relationships.csv
+
+# Retired reference files (kept locally for reference)
+senzing/senzing_mcp_reference.md
