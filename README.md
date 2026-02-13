@@ -35,8 +35,7 @@ senzing/
 │   ├── sz_schema_generator.py          # Profile source data structure
 │   ├── lint_senzing_json.py            # Validate JSON structure
 │   └── sz_json_analyzer.py             # Analyze mapping quality
-├── senzing_tools_reference.md          # Complete tool & CLI reference
-└── senzing_mcp_reference.md            # MCP server usage reference
+└── senzing_tools_reference.md          # Complete tool & CLI reference
 ```
 
 **Prompts** — The mapping assistant prompt drives the 5-stage workflow. Your AI fetches it and follows the instructions to guide you through mapping.
@@ -45,7 +44,7 @@ senzing/
 
 **Tools** — Python scripts the AI runs to profile source data, validate JSON structure, and analyze mapping quality.
 
-**Tool guides** — [senzing_tools_reference.md](senzing/senzing_tools_reference.md) is the complete reference for all tools including Senzing core CLI tools (configtool, file loader, snapshot). [senzing_mcp_reference.md](senzing/senzing_mcp_reference.md) covers the MCP server for post-load entity exploration.
+**Tool guides** — [senzing_tools_reference.md](senzing/senzing_tools_reference.md) is the complete reference for all tools including Senzing core CLI tools (configtool, file loader, snapshot).
 
 ---
 
@@ -57,7 +56,7 @@ Different workflow steps have different requirements:
 
 **Step 5** (Configure, Load, Snapshot) — Requires a Senzing environment. Create a `senzing_server.json` config file in your project root to tell tools how to connect (local, Docker, or remote). See [senzing_tools_reference.md](senzing/senzing_tools_reference.md) for configuration details.
 
-**Step 6 entity exploration** — Requires the [Senzing MCP Server](https://github.com/jbutcher21/senzing-mcp-server) installed in your Senzing environment and configured in your AI assistant's MCP settings. See that repo for installation and setup. The [senzing_mcp_reference.md](senzing/senzing_mcp_reference.md) in this repo provides additional instructions on each MCP tool and how to format responses.
+**Step 6 entity exploration** — Requires the [Senzing MCP Server](https://github.com/jbutcher21/senzing-mcp-server) installed in your Senzing environment and configured in your AI assistant's MCP settings. See that repo for installation and setup.
 
 ---
 
@@ -125,4 +124,4 @@ The AI analyzes the snapshot JSON from step 5 to show entity counts, match categ
 >
 > *"How was entity 1001 resolved?"*
 
-The AI uses MCP tools to search, retrieve, and explain specific entities and their relationships. See [senzing_mcp_reference.md](senzing/senzing_mcp_reference.md) for available tools.
+The AI uses MCP tools to search, retrieve, and explain specific entities and their relationships. See the [Senzing MCP Server](https://github.com/jbutcher21/senzing-mcp-server) repo for available tools.
