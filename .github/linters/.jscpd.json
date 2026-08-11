@@ -1,0 +1,4 @@
+{
+  "threshold": 2,
+  "ignore": ["**/.github/workflows/**", "**/sz_default_config.json"]
+}
